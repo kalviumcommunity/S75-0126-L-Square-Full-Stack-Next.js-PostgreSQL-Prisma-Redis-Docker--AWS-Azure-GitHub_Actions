@@ -1,0 +1,1 @@
+# S75-0126-L-Square-Full-Stack-Next.js-PostgreSQL-Prisma-Redis-Docker--AWS-Azure-GitHub_Actions
