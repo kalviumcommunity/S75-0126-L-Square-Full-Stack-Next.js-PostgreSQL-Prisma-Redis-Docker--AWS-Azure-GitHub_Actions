@@ -49,7 +49,7 @@ To design and implement a transparent, verifiable system that:
   - API integration  
   - Documentation  
 
-- **Paul Raj** – Backend & DevOps Lead  
+- **Dhanya Lakshmi** – Backend & DevOps Lead  
   - Database schema design  
   - Backend API development  
   - Cloud deployment  
