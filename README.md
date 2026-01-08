@@ -104,3 +104,154 @@ To design and implement a transparent, verifiable system that:
 
 ## License
 This project is developed for academic and learning purposes as part of a 4-week sprint.
+
+
+Below is a **ready-to-paste README section** that clearly documents all four points in a professional, reviewer-friendly way. You can adapt names of tools if needed.
+
+---
+
+## 🧩 Code Quality & Consistency
+
+This project enforces strict code quality standards using **TypeScript (strict mode)**, **ESLint**, **Prettier**, and **pre-commit hooks** to minimize runtime bugs and maintain team-wide consistency.
+
+---
+
+### 1. Why Strict TypeScript Mode Reduces Runtime Bugs
+
+Strict TypeScript mode (`"strict": true` in `tsconfig.json`) enables a set of powerful compile-time checks that catch errors **before the code runs**.
+
+Key benefits:
+
+* **No implicit `any`**: Prevents variables from silently becoming untyped.
+* **Strict null checks**: Forces handling of `null` and `undefined`, avoiding common runtime crashes.
+* **Safer function contracts**: Ensures parameters and return types are correctly used.
+* **Early bug detection**: Many logic errors are caught during development instead of in production.
+
+Result:
+ Fewer unexpected crashes, safer refactoring, and more predictable behavior.
+
+---
+
+### 2. ESLint + Prettier Rules Enforced
+
+This project uses **ESLint** for code correctness and **Prettier** for formatting.
+
+#### ESLint enforces:
+
+* No unused variables or imports
+* Consistent use of `const` over `let` where possible
+* Proper React hooks usage (if applicable)
+* Prevention of common JavaScript/TypeScript anti-patterns
+* Consistent error handling and clean code practices
+
+#### Prettier enforces:
+
+* Consistent indentation and spacing
+* Uniform quote style
+* Standardized line length
+* Automatic formatting on save or commit
+
+Result:
+ Clean, readable code with zero formatting debates during reviews.
+
+---
+
+### 3. How Pre-commit Hooks Improve Team Consistency
+
+Pre-commit hooks (using tools like **Husky** and **lint-staged**) automatically run checks **before code is committed**.
+
+They ensure:
+
+* ESLint passes before any commit
+* Code is formatted with Prettier
+* Broken or non-compliant code never enters the repository
+* All contributors follow the same standards without manual enforcement
+
+Result:
+ Fewer CI failures, cleaner pull requests, and smoother collaboration.
+
+---
+
+### 4. Linting Evidence (Screenshots / Logs)
+
+#### Successful Lint Run (Example)
+
+```bash
+✔ ESLint: No issues found
+✔ Prettier: Code formatted successfully
+✔ Pre-commit checks passed
+```
+
+#### Example of Fixed Violations
+
+Before:
+
+```ts
+function greet(name) {
+  console.log("Hello " + name)
+}
+```
+
+After ESLint + Prettier:
+
+```ts
+function greet(name: string): void {
+  console.log(`Hello ${name}`);
+}
+```
+
+>  **Screenshots:**
+> Add screenshots of:
+  ![alt text](lint-result.png)
+
+---
+
+### Summary
+
+By combining **Strict TypeScript**, **ESLint**, **Prettier**, and **pre-commit hooks**, this project achieves:
+
+* Early bug detection
+* Consistent coding standards
+* Cleaner commits
+* Better long-term maintainability
+
+---
+
+## Environment Variables
+
+This project uses environment variables to manage configuration securely across development and production environments.
+
+### Environment Files Used
+
+* `.env.local` → Local development (not committed)
+* `.env.production` → Production values (not committed)
+* `.env.example` → Template for contributors (committed)
+
+---
+
+### Server-side vs Client-side Variables
+
+#### Server-side only (Never exposed)
+
+These variables **must not** be prefixed with `NEXT_PUBLIC_` and are accessible only on the server:
+
+* `DATABASE_URL`
+* `JWT_SECRET`
+* `API_BASE_URL`
+
+These are used in:
+
+* API routes
+* Server components
+* Backend services
+
+#### Client-side safe variables
+
+Variables prefixed with `NEXT_PUBLIC_` are embedded into the frontend bundle and **are publicly readable**:
+
+* `NEXT_PUBLIC_API_BASE_URL`
+* `NEXT_PUBLIC_APP_URL`
+
+Only non-sensitive values should use this prefix.
+
+---
