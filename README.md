@@ -291,3 +291,66 @@ This convention improves clarity, traceability, and collaboration among team mem
 All changes are submitted through Pull Requests using a standard template `located` at:
 
 `.gitHub/pull_request_template.md`
+
+
+Here is a **clean, small, evaluator-friendly README** you can directly use.
+It explains *just enough* and matches what you actually built.
+
+---
+
+# Dockerized Setup
+
+This project containerizes a **Next.js application**, **PostgreSQL database**, and **Redis cache** using **Docker** and **Docker Compose** to provide a consistent local development environment.
+
+---
+
+## Tech Stack
+
+* Next.js (Node.js 20)
+* PostgreSQL 15
+* Redis 7
+* Docker & Docker Compose (v2)
+
+---
+
+## How to Run Locally
+
+Make sure Docker is installed and running.
+
+```bash
+docker compose up --build
+```
+
+---
+
+## Service Verification
+
+* **Next.js App**: [http://localhost:3000](http://localhost:3000)
+* **PostgreSQL**: running on port `5432` *inside Docker* (`db:5432`)
+* **Redis**: running on port `6379` *inside Docker* (`redis:6379`)
+
+PostgreSQL and Redis are accessed internally via Docker networking and are not exposed to the host machine.
+
+---
+
+## Docker Overview
+
+* **Dockerfile** builds and runs the Next.js app inside a Node.js container
+* **docker-compose.yml** orchestrates:
+
+  * `app` – Next.js application
+  * `db` – PostgreSQL with persistent volume
+  * `redis` – Redis cache
+* All services run on a shared Docker network
+
+---
+
+## Stopping the Containers
+
+```bash
+docker compose down
+```
+
+---
+
+This setup ensures team consistency and mirrors production-style container networking.
