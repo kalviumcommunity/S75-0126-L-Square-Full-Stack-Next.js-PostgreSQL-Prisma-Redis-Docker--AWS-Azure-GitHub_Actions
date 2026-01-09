@@ -255,3 +255,39 @@ Variables prefixed with `NEXT_PUBLIC_` are embedded into the frontend bundle and
 Only non-sensitive values should use this prefix.
 
 ---
+
+# Team Branching & Pull Request Workflow
+
+This repository follows a professional GitHub workflow similar to real-world engineering teams. The workflow is designed to ensure clean code, consistent collaboration, and high-quality contributions.
+
+---
+
+## Branching Strategy & Naming Conventions
+
+All development work is done on separate branches. Direct commits to the `main` branch are not allowed.
+
+### Branch Naming Format
+
+The team follows a consistent branch naming convention:
+
+- `feature/<feature-name>` – For new features  
+  Example: `feature/login-auth`
+
+- `fix/<bug-name>` – For bug fixes  
+  Example: `fix/navbar-alignment`
+
+- `chore/<task-name>` – For maintenance or setup tasks  
+  Example: `chore/update-dependencies`
+
+- `docs/<update-name>` – For documentation updates  
+  Example: `docs/update-readme`
+
+This convention improves clarity, traceability, and collaboration among team members.
+
+---
+
+## Pull Request (PR) Template
+
+All changes are submitted through Pull Requests using a standard template `located` at:
+
+`.gitHub/pull_request_template.md`
