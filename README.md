@@ -354,3 +354,43 @@ docker compose down
 ---
 
 This setup ensures team consistency and mirrors production-style container networking.
+
+
+
+# Prisma ORM Integration
+
+Prisma ORM is used as the data access layer to connect the Next.js application with a PostgreSQL database. It provides type-safe queries, centralized schema management, and improves overall backend reliability.
+
+## Setup
+
+Prisma was installed and initialized using:
+
+```bash
+npm install prisma --save-dev
+npx prisma init
+```
+
+This created the `/prisma/schema.prisma` file and added `DATABASE_URL` in `.env`.
+
+## Schema & Models
+
+Models are defined in `schema.prisma` to represent database tables and relationships. Example models include `User` and `Project`, where one user can have multiple projects using Prisma relations.
+
+## Prisma Client
+
+The Prisma Client was generated using:
+
+```bash
+npx prisma generate
+```
+
+A singleton Prisma Client was configured in `src/lib/prisma.ts` to prevent multiple database connections during development.
+
+## Testing
+
+A test query using `prisma.user.findMany()` confirmed successful connection between Prisma and PostgreSQL.
+
+## Conclusion
+
+Prisma simplifies database operations by providing strong type safety, cleaner queries, and better developer productivity, making it a reliable ORM for full-stack Next.js applications.
+
