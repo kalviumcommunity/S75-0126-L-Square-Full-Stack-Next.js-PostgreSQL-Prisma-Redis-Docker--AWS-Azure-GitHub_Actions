@@ -6,16 +6,18 @@ datasource db {
   provider = "postgresql"
 }
 
-// User model - passengers and administrators
 model User {
-  id            Int             @id @default(autoincrement())
-  name          String
-  email         String          @unique
-  phone         String?
-  role          UserRole        @default(PASSENGER)
-  createdAt     DateTime        @default(now())
-  bookings      Booking[]
+  id             Int             @id @default(autoincrement())
+  name           String
+  email          String          @unique
+  phone          String?
+  role           UserRole        @default(PASSENGER)
+  createdAt      DateTime        @default(now())
+  bookings       Booking[]
   refundRequests RefundRequest[]
+
+  @@index([role])
+  @@index([createdAt])
 }
 
 enum UserRole {
@@ -24,56 +26,65 @@ enum UserRole {
   ADMIN
 }
 
-// Bus operators/companies
 model BusOperator {
-  id              Int      @id @default(autoincrement())
-  name            String
-  licenseNumber   String   @unique
-  contactEmail    String
-  contactPhone    String
-  cancellationPolicy String @db.Text
-  routes          Route[]
-  createdAt       DateTime @default(now())
+  id                 Int      @id @default(autoincrement())
+  name               String
+  licenseNumber      String   @unique
+  contactEmail       String
+  contactPhone       String
+  cancellationPolicy String   @db.Text
+  routes             Route[]
+  createdAt          DateTime @default(now())
+
+  @@index([createdAt])
 }
 
-// Bus routes
 model Route {
-  id            Int         @id @default(autoincrement())
-  origin        String
-  destination   String
-  distance      Float
-  operatorId    Int
-  operator      BusOperator @relation(fields: [operatorId], references: [id])
-  schedules     Schedule[]
+  id          Int         @id @default(autoincrement())
+  origin      String
+  destination String
+  distance    Float
+  operatorId  Int
+  operator    BusOperator @relation(fields: [operatorId], references: [id])
+  schedules   Schedule[]
+
+  @@index([operatorId])
+  @@index([origin, destination])
 }
 
-// Scheduled trips
 model Schedule {
-  id            Int       @id @default(autoincrement())
-  routeId       Int
-  route         Route     @relation(fields: [routeId], references: [id])
-  departureTime DateTime
-  arrivalTime   DateTime
-  price         Float
+  id             Int       @id @default(autoincrement())
+  routeId        Int
+  route          Route     @relation(fields: [routeId], references: [id])
+  departureTime  DateTime
+  arrivalTime    DateTime
+  price          Float
   availableSeats Int
-  bookings      Booking[]
-  createdAt     DateTime  @default(now())
+  bookings       Booking[]
+  createdAt      DateTime  @default(now())
+
+  @@index([routeId])
+  @@index([departureTime])
 }
 
-// Passenger bookings
 model Booking {
-  id              Int             @id @default(autoincrement())
-  bookingNumber   String          @unique
-  userId          Int
-  user            User            @relation(fields: [userId], references: [id])
-  scheduleId      Int
-  schedule        Schedule        @relation(fields: [scheduleId], references: [id])
-  seatNumber      String
-  totalPrice      Float
-  status          BookingStatus   @default(CONFIRMED)
-  bookedAt        DateTime        @default(now())
-  cancelledAt     DateTime?
-  refundRequest   RefundRequest?
+  id            Int           @id @default(autoincrement())
+  bookingNumber String        @unique
+  userId        Int
+  user          User          @relation(fields: [userId], references: [id])
+  scheduleId    Int
+  schedule      Schedule      @relation(fields: [scheduleId], references: [id])
+  seatNumber    String
+  totalPrice    Float
+  status        BookingStatus @default(CONFIRMED)
+  bookedAt      DateTime      @default(now())
+  cancelledAt   DateTime?
+  refundRequest RefundRequest?
+
+  @@index([userId])
+  @@index([scheduleId])
+  @@index([status])
+  @@index([bookedAt])
 }
 
 enum BookingStatus {
@@ -83,21 +94,23 @@ enum BookingStatus {
   PARTIALLY_REFUNDED
 }
 
-// Transparent refund requests
 model RefundRequest {
-  id                Int           @id @default(autoincrement())
-  bookingId         Int           @unique
-  booking           Booking       @relation(fields: [bookingId], references: [id])
-  userId            Int
-  user              User          @relation(fields: [userId], references: [id])
-  requestedAmount   Float
-  approvedAmount    Float?
-  reason            String        @db.Text
-  status            RefundStatus  @default(PENDING)
-  requestedAt       DateTime      @default(now())
-  processedAt       DateTime?
-  processorNotes    String?       @db.Text
-  timeline          RefundTimeline[]
+  id              Int           @id @default(autoincrement())
+  bookingId       Int           @unique
+  booking         Booking       @relation(fields: [bookingId], references: [id])
+  userId          Int
+  user            User          @relation(fields: [userId], references: [id])
+  requestedAmount Float
+  approvedAmount  Float?
+  reason          String        @db.Text
+  status          RefundStatus  @default(PENDING)
+  requestedAt     DateTime      @default(now())
+  processedAt     DateTime?
+  processorNotes  String?       @db.Text
+  timeline        RefundTimeline[]
+
+  @@index([status])
+  @@index([userId])
 }
 
 enum RefundStatus {
@@ -107,7 +120,6 @@ enum RefundStatus {
   PROCESSED
 }
 
-// Transparent refund timeline/audit trail
 model RefundTimeline {
   id              Int           @id @default(autoincrement())
   refundRequestId Int
@@ -115,4 +127,7 @@ model RefundTimeline {
   status          String
   notes           String?       @db.Text
   createdAt       DateTime      @default(now())
+
+  @@index([refundRequestId])
+  @@index([createdAt])
 }
