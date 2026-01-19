@@ -1,39 +1,118 @@
-datasource db {
-  provider = "postgresql"
-}
-
 generator client {
   provider = "prisma-client-js"
 }
 
+datasource db {
+  provider = "postgresql"
+}
+
+// User model - passengers and administrators
 model User {
-  id        Int       @id @default(autoincrement())
-  name      String
-  email     String    @unique
-  projects  Project[]
+  id            Int             @id @default(autoincrement())
+  name          String
+  email         String          @unique
+  phone         String?
+  role          UserRole        @default(PASSENGER)
+  createdAt     DateTime        @default(now())
+  bookings      Booking[]
+  refundRequests RefundRequest[]
 }
 
-model Project {
-  id        Int       @id @default(autoincrement())
-  name      String
-  createdAt DateTime  @default(now())
-  userId    Int
-  user      User      @relation(fields: [userId], references: [id])
-  tasks     Task[]
+enum UserRole {
+  PASSENGER
+  OPERATOR
+  ADMIN
 }
 
-model Task {
-  id          Int      @id @default(autoincrement())
-  title       String
-  status      String
-  projectId   Int
-  project     Project  @relation(fields: [projectId], references: [id])
-  comments    Comment[]
+// Bus operators/companies
+model BusOperator {
+  id              Int      @id @default(autoincrement())
+  name            String
+  licenseNumber   String   @unique
+  contactEmail    String
+  contactPhone    String
+  cancellationPolicy String @db.Text
+  routes          Route[]
+  createdAt       DateTime @default(now())
 }
 
-model Comment {
-  id      Int    @id @default(autoincrement())
-  content String
-  taskId  Int
-  task    Task   @relation(fields: [taskId], references: [id])
+// Bus routes
+model Route {
+  id            Int         @id @default(autoincrement())
+  origin        String
+  destination   String
+  distance      Float
+  operatorId    Int
+  operator      BusOperator @relation(fields: [operatorId], references: [id])
+  schedules     Schedule[]
+}
+
+// Scheduled trips
+model Schedule {
+  id            Int       @id @default(autoincrement())
+  routeId       Int
+  route         Route     @relation(fields: [routeId], references: [id])
+  departureTime DateTime
+  arrivalTime   DateTime
+  price         Float
+  availableSeats Int
+  bookings      Booking[]
+  createdAt     DateTime  @default(now())
+}
+
+// Passenger bookings
+model Booking {
+  id              Int             @id @default(autoincrement())
+  bookingNumber   String          @unique
+  userId          Int
+  user            User            @relation(fields: [userId], references: [id])
+  scheduleId      Int
+  schedule        Schedule        @relation(fields: [scheduleId], references: [id])
+  seatNumber      String
+  totalPrice      Float
+  status          BookingStatus   @default(CONFIRMED)
+  bookedAt        DateTime        @default(now())
+  cancelledAt     DateTime?
+  refundRequest   RefundRequest?
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+// Transparent refund requests
+model RefundRequest {
+  id                Int           @id @default(autoincrement())
+  bookingId         Int           @unique
+  booking           Booking       @relation(fields: [bookingId], references: [id])
+  userId            Int
+  user              User          @relation(fields: [userId], references: [id])
+  requestedAmount   Float
+  approvedAmount    Float?
+  reason            String        @db.Text
+  status            RefundStatus  @default(PENDING)
+  requestedAt       DateTime      @default(now())
+  processedAt       DateTime?
+  processorNotes    String?       @db.Text
+  timeline          RefundTimeline[]
+}
+
+enum RefundStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PROCESSED
+}
+
+// Transparent refund timeline/audit trail
+model RefundTimeline {
+  id              Int           @id @default(autoincrement())
+  refundRequestId Int
+  refundRequest   RefundRequest @relation(fields: [refundRequestId], references: [id])
+  status          String
+  notes           String?       @db.Text
+  createdAt       DateTime      @default(now())
 }
