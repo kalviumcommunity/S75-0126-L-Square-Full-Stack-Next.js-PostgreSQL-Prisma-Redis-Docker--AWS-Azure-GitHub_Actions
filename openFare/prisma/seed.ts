@@ -7,6 +7,7 @@ const { Pool } = pg;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }, // required for Supabase
 });
 
 const adapter = new PrismaPg(pool);
@@ -15,22 +16,37 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log('🌱 Starting database seed...');
 
-  // Create a bus operator
-  const operator = await prisma.busOperator.create({
-    data: {
+  /* =======================
+     BUS OPERATOR
+  ======================= */
+  const operator = await prisma.busOperator.upsert({
+    where: { licenseNumber: 'EXP-2024-001' },
+    update: {
+      name: 'Express Travels',
+      contactEmail: 'contact@expresstravels.com',
+      contactPhone: '+91-9876543210',
+      cancellationPolicy:
+        'Full refund if cancelled 24 hours before departure. 50% refund if cancelled 12 hours before.',
+    },
+    create: {
       name: 'Express Travels',
       licenseNumber: 'EXP-2024-001',
       contactEmail: 'contact@expresstravels.com',
       contactPhone: '+91-9876543210',
-      cancellationPolicy: 'Full refund if cancelled 24 hours before departure. 50% refund if cancelled 12 hours before.',
+      cancellationPolicy:
+        'Full refund if cancelled 24 hours before departure. 50% refund if cancelled 12 hours before.',
     },
   });
 
-  console.log('✅ Created operator:', operator.name);
-
-  // Create a route
-  const route = await prisma.route.create({
-    data: {
+  /* =======================
+     ROUTE
+  ======================= */
+  const route = await prisma.route.upsert({
+    where: {
+      id: 1, // simple approach for seed
+    },
+    update: {},
+    create: {
       origin: 'Chennai',
       destination: 'Bangalore',
       distance: 350.5,
@@ -38,11 +54,13 @@ async function main() {
     },
   });
 
-  console.log('✅ Created route:', `${route.origin} → ${route.destination}`);
-
-  // Create a schedule
-  const schedule = await prisma.schedule.create({
-    data: {
+  /* =======================
+     SCHEDULE
+  ======================= */
+  const schedule = await prisma.schedule.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {
       routeId: route.id,
       departureTime: new Date('2026-01-15T06:00:00'),
       arrivalTime: new Date('2026-01-15T12:00:00'),
@@ -51,11 +69,13 @@ async function main() {
     },
   });
 
-  console.log('✅ Created schedule:', `Departure: ${schedule.departureTime}`);
-
-  // Create a test user
-  const user = await prisma.user.create({
-    data: {
+  /* =======================
+     USER
+  ======================= */
+  const user = await prisma.user.upsert({
+    where: { email: 'test@example.com' },
+    update: {},
+    create: {
       name: 'Test User',
       email: 'test@example.com',
       phone: '+91-9876543211',
@@ -63,14 +83,65 @@ async function main() {
     },
   });
 
-  console.log('✅ Created user:', user.name);
+  /* =======================
+     BOOKING
+  ======================= */
+  const booking = await prisma.booking.upsert({
+    where: { bookingNumber: 'BK-CHN-BLR-0001' },
+    update: {},
+    create: {
+      bookingNumber: 'BK-CHN-BLR-0001',
+      userId: user.id,
+      scheduleId: schedule.id,
+      seatNumber: 'A1',
+      totalPrice: schedule.price,
+      status: 'CONFIRMED',
+    },
+  });
+
+  /* =======================
+     CANCEL BOOKING
+  ======================= */
+  const cancelledBooking = await prisma.booking.update({
+    where: { id: booking.id },
+    data: {
+      status: 'CANCELLED',
+      cancelledAt: new Date(),
+    },
+  });
+
+  /* =======================
+     REFUND REQUEST
+  ======================= */
+  const refundRequest = await prisma.refundRequest.upsert({
+    where: { bookingId: cancelledBooking.id },
+    update: {},
+    create: {
+      bookingId: cancelledBooking.id,
+      userId: user.id,
+      requestedAmount: cancelledBooking.totalPrice,
+      reason: 'Plan changed, cancelling before departure',
+      status: 'PENDING',
+    },
+  });
+
+  /* =======================
+     REFUND TIMELINE
+  ======================= */
+  await prisma.refundTimeline.create({
+    data: {
+      refundRequestId: refundRequest.id,
+      status: 'PENDING',
+      notes: 'Refund requested by passenger',
+    },
+  });
 
   console.log('🎉 Database seeded successfully!');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error seeding database:', e);
+    console.error('❌ Seed failed:', e);
     process.exit(1);
   })
   .finally(async () => {
