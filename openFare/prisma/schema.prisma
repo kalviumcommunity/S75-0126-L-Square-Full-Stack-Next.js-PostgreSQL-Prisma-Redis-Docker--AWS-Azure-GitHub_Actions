@@ -6,74 +6,116 @@ datasource db {
   provider = "postgresql"
 }
 
-// User model - passengers and administrators
 model User {
-  id            Int             @id @default(autoincrement())
-  name          String
-  email         String          @unique
-  phone         String?
-  role          UserRole        @default(PASSENGER)
-  createdAt     DateTime        @default(now())
-  bookings      Booking[]
+  id             Int             @id @default(autoincrement())
+  name           String
+  email          String          @unique
+  createdAt      DateTime        @default(now())
+  phone          String?
+  role           UserRole        @default(PASSENGER)
+  bookings       Booking[]
   refundRequests RefundRequest[]
+
+  @@index([createdAt])
+  @@index([role])
+}
+
+model BusOperator {
+  id                 Int      @id @default(autoincrement())
+  name               String
+  licenseNumber      String   @unique
+  contactEmail       String
+  contactPhone       String
+  cancellationPolicy String
+  createdAt          DateTime @default(now())
+  routes             Route[]
+
+  @@index([createdAt])
+}
+
+model Route {
+  id          Int         @id @default(autoincrement())
+  origin      String
+  destination String
+  distance    Float
+  operatorId  Int
+  operator    BusOperator @relation(fields: [operatorId], references: [id])
+  schedules   Schedule[]
+
+  @@index([operatorId])
+  @@index([origin, destination])
+}
+
+model Schedule {
+  id             Int       @id @default(autoincrement())
+  routeId        Int
+  departureTime  DateTime
+  arrivalTime    DateTime
+  price          Float
+  availableSeats Int
+  createdAt      DateTime  @default(now())
+  bookings       Booking[]
+  route          Route     @relation(fields: [routeId], references: [id])
+
+  @@index([departureTime])
+  @@index([routeId])
+}
+
+model Booking {
+  id            Int            @id @default(autoincrement())
+  bookingNumber String         @unique
+  userId        Int
+  scheduleId    Int
+  seatNumber    String
+  totalPrice    Float
+  status        BookingStatus  @default(CONFIRMED)
+  bookedAt      DateTime       @default(now())
+  cancelledAt   DateTime?
+  schedule      Schedule       @relation(fields: [scheduleId], references: [id])
+  user          User           @relation(fields: [userId], references: [id])
+  refundRequest RefundRequest?
+
+  @@index([bookedAt])
+  @@index([scheduleId])
+  @@index([status])
+  @@index([userId])
+}
+
+model RefundRequest {
+  id              Int              @id @default(autoincrement())
+  bookingId       Int              @unique
+  userId          Int
+  requestedAmount Float
+  approvedAmount  Float?
+  reason          String
+  status          RefundStatus     @default(PENDING)
+  requestedAt     DateTime         @default(now())
+  processedAt     DateTime?
+  processorNotes  String?
+  booking         Booking          @relation(fields: [bookingId], references: [id])
+  user            User             @relation(fields: [userId], references: [id])
+  timeline        RefundTimeline[]
+
+  @@index([status])
+  @@index([userId])
+}
+
+model RefundTimeline {
+  id              Int           @id @default(autoincrement())
+  refundRequestId Int
+  status          String
+  notes           String?
+  createdAt       DateTime      @default(now())
+  refundRequest   RefundRequest @relation(fields: [refundRequestId], references: [id])
+
+  @@index([createdAt])
+  @@index([refundRequestId])
 }
 
 enum UserRole {
   PASSENGER
   OPERATOR
   ADMIN
-}
-
-// Bus operators/companies
-model BusOperator {
-  id              Int      @id @default(autoincrement())
-  name            String
-  licenseNumber   String   @unique
-  contactEmail    String
-  contactPhone    String
-  cancellationPolicy String @db.Text
-  routes          Route[]
-  createdAt       DateTime @default(now())
-}
-
-// Bus routes
-model Route {
-  id            Int         @id @default(autoincrement())
-  origin        String
-  destination   String
-  distance      Float
-  operatorId    Int
-  operator      BusOperator @relation(fields: [operatorId], references: [id])
-  schedules     Schedule[]
-}
-
-// Scheduled trips
-model Schedule {
-  id            Int       @id @default(autoincrement())
-  routeId       Int
-  route         Route     @relation(fields: [routeId], references: [id])
-  departureTime DateTime
-  arrivalTime   DateTime
-  price         Float
-  availableSeats Int
-  bookings      Booking[]
-  createdAt     DateTime  @default(now())
-}
-
-// Passenger bookings
-model Booking {
-  id              Int             @id @default(autoincrement())
-  bookingNumber   String          @unique
-  userId          Int
-  user            User            @relation(fields: [userId], references: [id])
-  scheduleId      Int
-  schedule        Schedule        @relation(fields: [scheduleId], references: [id])
-  seatNumber      String
-  totalPrice      Float
-  status          BookingStatus   @default(CONFIRMED)
-  bookedAt        DateTime        @default(now())
-  cancelledAt     DateTime?
-  refundRequest   RefundRequest?
 }
 
 enum BookingStatus {
@@ -83,36 +125,9 @@ enum BookingStatus {
   PARTIALLY_REFUNDED
 }
 
-// Transparent refund requests
-model RefundRequest {
-  id                Int           @id @default(autoincrement())
-  bookingId         Int           @unique
-  booking           Booking       @relation(fields: [bookingId], references: [id])
-  userId            Int
-  user              User          @relation(fields: [userId], references: [id])
-  requestedAmount   Float
-  approvedAmount    Float?
-  reason            String        @db.Text
-  status            RefundStatus  @default(PENDING)
-  requestedAt       DateTime      @default(now())
-  processedAt       DateTime?
-  processorNotes    String?       @db.Text
-  timeline          RefundTimeline[]
-}
-
 enum RefundStatus {
   PENDING
   APPROVED
   REJECTED
   PROCESSED
-}
-
-// Transparent refund timeline/audit trail
-model RefundTimeline {
-  id              Int           @id @default(autoincrement())
-  refundRequestId Int
-  refundRequest   RefundRequest @relation(fields: [refundRequestId], references: [id])
-  status          String
-  notes           String?       @db.Text
-  createdAt       DateTime      @default(now())
 }
