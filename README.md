@@ -390,7 +390,77 @@ A singleton Prisma Client was configured in `src/lib/prisma.ts` to prevent multi
 
 A test query using `prisma.user.findMany()` confirmed successful connection between Prisma and PostgreSQL.
 
-## Conclusion
 
-Prisma simplifies database operations by providing strong type safety, cleaner queries, and better developer productivity, making it a reliable ORM for full-stack Next.js applications.
+##
 
+# Prisma Migrations & Seeding
+
+This project uses Prisma ORM for versioned database migrations and reproducible seed data.
+
+## Migrations
+```bash
+npx prisma migrate dev --name init_schema
+npx prisma migrate dev --name add_project_table
+npx prisma migrate reset
+````
+
+Migration files are stored in `prisma/migrations/`.
+
+## Seeding
+
+* Seed file: `prisma/seed.ts`
+
+```bash
+npx prisma db seed
+```
+
+Seed logic is idempotent to prevent duplicates.
+
+## Verify
+
+```bash
+npx prisma studio
+```
+
+
+### RESTful API Design (Next.js App Router)
+
+This project demonstrates how to design clean, RESTful API routes using **Next.js App Router** and file-based routing under the `/app/api` directory.
+
+All API endpoints are organized by **resources** (users, projects, tasks) using **plural, lowercase nouns** to ensure consistency and predictability.
+
+Each folder inside `app/api/` represents a resource, and each `route.ts` file defines HTTP method handlers such as `GET`, `POST`, `PUT/PATCH`, and `DELETE`.
+
+#### API Route Structure
+
+* `/api/users` – manage users
+* `/api/users/[id]` – operations on a specific user
+* `/api/projects` – manage projects
+* `/api/tasks` – manage tasks
+
+#### REST Conventions
+
+* `GET` → fetch data
+* `POST` → create data
+* `PUT / PATCH` → update data
+* `DELETE` → remove data
+
+#### Features
+
+* Resource-based routing (no verbs in URLs)
+* Pagination support using query params (`page`, `limit`)
+* Proper HTTP status codes (`200`, `201`, `400`, `404`, `500`)
+* JSON-based request and response format
+* Clear error handling for missing or invalid data
+
+#### Testing
+
+All endpoints were tested using **curl/Postman** to verify:
+
+* Correct HTTP methods
+* Valid JSON responses
+* Pagination and error behavior
+
+#### Reflection
+
+Consistent naming and predictable routes make the API easier to use, debug, and scale. A well-structured API reduces integration errors and improves long-term maintainability.
