@@ -1,0 +1,39 @@
+import { NextResponse } from "next/server";
+
+export const sendSuccess = (
+  data: any,
+  message = "Success",
+  status = 200,
+  extra?: any
+) => {
+  return NextResponse.json(
+    {
+      success: true,
+      message,
+      data,
+      ...extra,
+      timestamp: new Date().toISOString(),
+    },
+    { status }
+  );
+};
+
+export const sendError = (
+  message = "Something went wrong",
+  code = "INTERNAL_ERROR",
+  status = 500,
+  details?: any
+) => {
+  return NextResponse.json(
+    {
+      success: false,
+      message,
+      error: {
+        code,
+        details,
+      },
+      timestamp: new Date().toISOString(),
+    },
+    { status }
+  );
+};
