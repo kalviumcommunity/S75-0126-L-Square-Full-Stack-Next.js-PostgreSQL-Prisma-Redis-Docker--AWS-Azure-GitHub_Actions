@@ -12,12 +12,14 @@ model User {
   email          String          @unique
   createdAt      DateTime        @default(now())
   phone          String?
+  password       String          // Required for authentication
   role           UserRole        @default(PASSENGER)
   bookings       Booking[]
   refundRequests RefundRequest[]
 
   @@index([createdAt])
   @@index([role])
+  @@index([email])
 }
 
 model BusOperator {
