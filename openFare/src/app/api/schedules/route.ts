@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
+import { createScheduleSchema } from '@/lib/schemas/scheduleSchema';
+import { ZodError } from 'zod';
 
 // GET /api/schedules - Get all schedules with pagination and filters
 export async function GET(req: Request) {
@@ -15,22 +15,19 @@ export async function GET(req: Request) {
     const skip = (page - 1) * limit;
 
     // Build filter
-    const where: any = {};
-    if (routeId) {
-      where.routeId = parseInt(routeId);
-    }
+    const where: {
+      routeId?: number;
+      departureTime?: { gte: Date; lt: Date };
+      availableSeats?: { gt: number };
+    } = {};
+    if (routeId) where.routeId = parseInt(routeId);
     if (date) {
       const startDate = new Date(date);
       const endDate = new Date(date);
       endDate.setDate(endDate.getDate() + 1);
-      where.departureTime = {
-        gte: startDate,
-        lt: endDate
-      };
+      where.departureTime = { gte: startDate, lt: endDate };
     }
-    if (availableOnly) {
-      where.availableSeats = { gt: 0 };
-    }
+    if (availableOnly) where.availableSeats = { gt: 0 };
 
     // Get total count
     const total = await prisma.schedule.count({ where });
@@ -44,19 +41,13 @@ export async function GET(req: Request) {
         route: {
           include: {
             operator: {
-              select: {
-                id: true,
-                name: true,
-                cancellationPolicy: true
-              }
-            }
-          }
+              select: { id: true, name: true, cancellationPolicy: true },
+            },
+          },
         },
-        _count: {
-          select: { bookings: true }
-        }
+        _count: { select: { bookings: true } },
       },
-      orderBy: { departureTime: 'asc' }
+      orderBy: { departureTime: 'asc' },
     });
 
     return NextResponse.json({
@@ -66,8 +57,8 @@ export async function GET(req: Request) {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit)
-      }
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     console.error('Error fetching schedules:', error);
@@ -82,77 +73,54 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { routeId, departureTime, arrivalTime, price, availableSeats } = body;
 
-    // Validation
-    if (!routeId || !departureTime || !arrivalTime || !price || !availableSeats) {
-      return NextResponse.json(
-        { success: false, error: 'All fields are required' },
-        { status: 400 }
-      );
-    }
-
-    if (price <= 0 || availableSeats <= 0) {
-      return NextResponse.json(
-        { success: false, error: 'Price and available seats must be positive numbers' },
-        { status: 400 }
-      );
-    }
-
-    const departure = new Date(departureTime);
-    const arrival = new Date(arrivalTime);
-
-    if (arrival <= departure) {
-      return NextResponse.json(
-        { success: false, error: 'Arrival time must be after departure time' },
-        { status: 400 }
-      );
-    }
+    // ✅ Zod validation
+    const validatedData = createScheduleSchema.parse(body);
+    const { routeId, departureTime, arrivalTime, price, availableSeats } = validatedData;
 
     // Check if route exists
-    const route = await prisma.route.findUnique({
-      where: { id: routeId }
-    });
-
+    const route = await prisma.route.findUnique({ where: { id: routeId } });
     if (!route) {
-      return NextResponse.json(
-        { success: false, error: 'Route not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Route not found' }, { status: 404 });
     }
 
     // Create schedule
     const schedule = await prisma.schedule.create({
       data: {
         routeId,
-        departureTime: departure,
-        arrivalTime: arrival,
+        departureTime: new Date(departureTime),
+        arrivalTime: new Date(arrivalTime),
         price,
-        availableSeats
+        availableSeats,
       },
       include: {
         route: {
           include: {
-            operator: {
-              select: {
-                id: true,
-                name: true
-              }
-            }
-          }
-        }
-      }
+            operator: { select: { id: true, name: true } },
+          },
+        },
+      },
     });
 
-    return NextResponse.json(
-      { success: true, data: schedule, message: 'Schedule created successfully' },
-      { status: 201 }
-    );
+    return NextResponse.json({
+      success: true,
+      data: schedule,
+      message: 'Schedule created successfully',
+    }, { status: 201 });
+
   } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json({
+        success: false,
+        message: 'Validation Error',
+        errors: error.issues.map(e => ({
+          field: e.path[0],
+          message: e.message,
+        })),
+      }, { status: 400 });
+    }
+
     console.error('Error creating schedule:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to create schedule' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Failed to create schedule' }, { status: 500 });
   }
 }

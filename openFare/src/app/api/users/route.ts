@@ -1,80 +1,16 @@
 import { NextResponse } from 'next/server';
-// import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
+import { UserRole } from '@prisma/client';
+import { createUserSchema } from '@/lib/schemas/userSchema';
+import { ZodError } from 'zod';
 
-
-// GET /api/users - Get all users with pagination
-export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const page = Number(searchParams.get('page')) || 1;
-    const limit = Number(searchParams.get('limit')) || 10;
-    const role = searchParams.get('role');
-    const skip = (page - 1) * limit;
-
-    // Build filter
-    const where: any = {};
-    if (role) {
-      where.role = role;
-    }
-
-    // Get total count for pagination
-    const total = await prisma.user.count({ where });
-
-    // Get users
-    const users = await prisma.user.findMany({
-      where,
-      skip,
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        _count: {
-          select: { bookings: true, refundRequests: true }
-        }
-      }
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: users,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit)
-      }
-    });
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch users' },
-      { status: 500 }
-    );
-  }
-}
-
-// POST /api/users - Create a new user
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, email, phone, role } = body;
 
-    // Validation
-    if (!name || !email) {
-      return NextResponse.json(
-        { success: false, error: 'Name and email are required' },
-        { status: 400 }
-      );
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid email format' },
-        { status: 400 }
-      );
-    }
+    // Validate input
+    const validatedData = createUserSchema.parse(body);
+    const { name, email, phone, role } = validatedData;
 
     // Create user
     const user = await prisma.user.create({
@@ -82,24 +18,68 @@ export async function POST(req: Request) {
         name,
         email,
         phone,
-        role: role || 'PASSENGER'
-      }
+        role: (role || 'PASSENGER') as UserRole,
+      },
     });
 
     return NextResponse.json(
       { success: true, data: user, message: 'User created successfully' },
       { status: 201 }
     );
-  } catch (error) {
-  console.error('CREATE USER ERROR >>>', error);
 
-  return NextResponse.json(
-    {
-      success: false,
-      error: error instanceof Error ? error.message : error,
-    },
-    { status: 500 }
-  );
+  } catch (err: unknown) {
+    // Make sure we type the error as unknown, then narrow it
+    if (err instanceof ZodError) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Validation Error',
+          errors: err.issues.map(e => ({
+            field: e.path[0],
+            message: e.message,
+          })),
+        },
+        { status: 400 }
+      );
+    }
+
+    // Prisma unique constraint
+    if (err && typeof err === 'object' && 'code' in err && (err as { code?: string }).code === 'P2002') {
+      return NextResponse.json(
+        { success: false, error: 'Email already exists' },
+        { status: 409 }
+      );
+    }
+
+    console.error('CREATE USER ERROR >>>', err);
+    return NextResponse.json(
+      { success: false, error: err instanceof Error ? err.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
 }
+export async function GET() {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        createdAt: true,
+      },
+    });
 
+    return NextResponse.json({
+      success: true,
+      data: users,
+    });
+  } catch (error) {
+    console.error("Failed to fetch users:", error);
+
+    return NextResponse.json(
+      { success: false, error: "Failed to fetch users" },
+      { status: 500 }
+    );
+  }
 }

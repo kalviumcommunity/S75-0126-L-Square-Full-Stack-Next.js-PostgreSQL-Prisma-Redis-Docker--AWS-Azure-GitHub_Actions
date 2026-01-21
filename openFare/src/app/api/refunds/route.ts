@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import type { RefundStatus } from '@prisma/client';
 
-const prisma = new PrismaClient();
-
-// GET /api/refunds - Get all refund requests with pagination and filters
+// GET /api/refunds - Get all refund requests
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -13,31 +12,20 @@ export async function GET(req: Request) {
     const status = searchParams.get('status');
     const skip = (page - 1) * limit;
 
-    // Build filter
-    const where: any = {};
-    if (userId) {
-      where.userId = parseInt(userId);
-    }
-    if (status) {
-      where.status = status;
-    }
+    const where: { userId?: number; status?: RefundStatus } = {};
+    if (userId) where.userId = Number(userId);
+    if (status) where.status = status as RefundStatus; // Cast to match RefundStatus enum
 
-    // Get total count
     const total = await prisma.refundRequest.count({ where });
 
-    // Get refund requests
     const refunds = await prisma.refundRequest.findMany({
       where,
       skip,
       take: limit,
+      orderBy: { requestedAt: 'desc' },
       include: {
         user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true
-          }
+          select: { id: true, name: true, email: true, phone: true }
         },
         booking: {
           include: {
@@ -62,8 +50,7 @@ export async function GET(req: Request) {
           orderBy: { createdAt: 'desc' },
           take: 5
         }
-      },
-      orderBy: { requestedAt: 'desc' }
+      }
     });
 
     return NextResponse.json({
@@ -85,125 +72,82 @@ export async function GET(req: Request) {
   }
 }
 
-// POST /api/refunds - Create a new refund request
+// POST /api/refunds - Create refund request
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { bookingId, userId, requestedAmount, reason } = body;
 
-    // Validation
     if (!bookingId || !userId || !requestedAmount || !reason) {
       return NextResponse.json(
-        { success: false, error: 'All fields (bookingId, userId, requestedAmount, reason) are required' },
+        { success: false, error: 'All fields are required' },
         { status: 400 }
       );
     }
 
     if (requestedAmount <= 0) {
       return NextResponse.json(
-        { success: false, error: 'Requested amount must be a positive number' },
+        { success: false, error: 'Requested amount must be positive' },
         { status: 400 }
       );
     }
 
-    // Check if booking exists
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
       include: {
-        refundRequest: true,
-        schedule: true
+        refundRequest: true
       }
     });
 
     if (!booking) {
-      return NextResponse.json(
-        { success: false, error: 'Booking not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Booking not found' }, { status: 404 });
     }
 
-    // Check if booking belongs to user
     if (booking.userId !== userId) {
-      return NextResponse.json(
-        { success: false, error: 'Booking does not belong to this user' },
-        { status: 403 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 403 });
     }
 
-    // Check if refund request already exists
     if (booking.refundRequest) {
       return NextResponse.json(
-        { success: false, error: 'Refund request already exists for this booking' },
+        { success: false, error: 'Refund already requested' },
         { status: 409 }
       );
     }
 
-    // Check if booking is cancelled
     if (booking.status !== 'CANCELLED') {
       return NextResponse.json(
-        { success: false, error: 'Only cancelled bookings can have refund requests' },
+        { success: false, error: 'Only cancelled bookings can be refunded' },
         { status: 400 }
       );
     }
 
-    // Check if requested amount is not more than total price
     if (requestedAmount > booking.totalPrice) {
       return NextResponse.json(
-        { success: false, error: 'Requested amount cannot exceed booking total price' },
+        { success: false, error: 'Requested amount exceeds total price' },
         { status: 400 }
       );
     }
 
-    // Create refund request and timeline in a transaction
     const refund = await prisma.$transaction(async (tx) => {
-      const newRefund = await tx.refundRequest.create({
+      const created = await tx.refundRequest.create({
         data: {
           bookingId,
           userId,
           requestedAmount,
           reason,
           status: 'PENDING'
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          },
-          booking: {
-            include: {
-              schedule: {
-                include: {
-                  route: {
-                    include: {
-                      operator: {
-                        select: {
-                          id: true,
-                          name: true,
-                          cancellationPolicy: true
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
         }
       });
 
-      // Create timeline entry
       await tx.refundTimeline.create({
         data: {
-          refundRequestId: newRefund.id,
+          refundRequestId: created.id,
           status: 'PENDING',
           notes: 'Refund request created'
         }
       });
 
-      return newRefund;
+      return created;
     });
 
     return NextResponse.json(
@@ -211,7 +155,7 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating refund request:', error);
+    console.error('Error creating refund:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to create refund request' },
       { status: 500 }

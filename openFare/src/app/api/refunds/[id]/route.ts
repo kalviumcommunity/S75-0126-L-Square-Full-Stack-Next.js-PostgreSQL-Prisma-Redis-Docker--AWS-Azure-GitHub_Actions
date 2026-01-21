@@ -1,207 +1,110 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
-
-// GET /api/refunds/[id] - Get refund request by ID
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+// GET /api/refunds/[id]
+export async function GET(_: Request, { params }: { params: { id: string } }) {
   try {
-    const id = parseInt(params.id);
-
+    const id = Number(params.id);
     if (isNaN(id)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid refund request ID' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: 'Invalid refund ID' }, { status: 400 });
     }
 
     const refund = await prisma.refundRequest.findUnique({
       where: { id },
       include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true
-          }
-        },
+        user: { select: { id: true, name: true, email: true, phone: true } },
         booking: {
           include: {
             schedule: {
               include: {
-                route: {
-                  include: {
-                    operator: true
-                  }
-                }
+                route: { include: { operator: true } }
               }
             }
           }
         },
-        timeline: {
-          orderBy: { createdAt: 'asc' }
-        }
+        timeline: { orderBy: { createdAt: 'asc' } }
       }
     });
 
     if (!refund) {
-      return NextResponse.json(
-        { success: false, error: 'Refund request not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Refund not found' }, { status: 404 });
     }
 
     return NextResponse.json({ success: true, data: refund });
   } catch (error) {
-    console.error('Error fetching refund request:', error);
+    console.error(error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch refund request' },
+      { success: false, error: 'Failed to fetch refund' },
       { status: 500 }
     );
   }
 }
 
-// PUT /api/refunds/[id] - Update refund request (admin only - for notes/status)
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+// PUT /api/refunds/[id]
+export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
-    const id = parseInt(params.id);
-    const body = await req.json();
-    const { processorNotes } = body;
+    const id = Number(params.id);
+    const { processorNotes } = await req.json();
 
     if (isNaN(id)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid refund request ID' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: 'Invalid refund ID' }, { status: 400 });
     }
 
-    // Check if refund request exists
-    const existingRefund = await prisma.refundRequest.findUnique({
-      where: { id }
-    });
-
-    if (!existingRefund) {
-      return NextResponse.json(
-        { success: false, error: 'Refund request not found' },
-        { status: 404 }
-      );
+    const refund = await prisma.refundRequest.findUnique({ where: { id } });
+    if (!refund) {
+      return NextResponse.json({ success: false, error: 'Refund not found' }, { status: 404 });
     }
 
-    // Only allow updating processor notes
-    const updatedRefund = await prisma.refundRequest.update({
+    const updated = await prisma.refundRequest.update({
       where: { id },
-      data: {
-        ...(processorNotes && { processorNotes })
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true
-          }
-        },
-        booking: {
-          include: {
-            schedule: {
-              include: {
-                route: {
-                  include: {
-                    operator: {
-                      select: {
-                        id: true,
-                        name: true
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        timeline: {
-          orderBy: { createdAt: 'desc' }
-        }
-      }
+      data: { processorNotes }
     });
 
     return NextResponse.json({
       success: true,
-      data: updatedRefund,
-      message: 'Refund request updated successfully'
+      data: updated,
+      message: 'Refund updated successfully'
     });
   } catch (error) {
-    console.error('Error updating refund request:', error);
+    console.error(error);
     return NextResponse.json(
-      { success: false, error: 'Failed to update refund request' },
+      { success: false, error: 'Failed to update refund' },
       { status: 500 }
     );
   }
 }
 
-// DELETE /api/refunds/[id] - Delete refund request
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+// DELETE /api/refunds/[id]
+export async function DELETE(_: Request, { params }: { params: { id: string } }) {
   try {
-    const id = parseInt(params.id);
+    const id = Number(params.id);
 
     if (isNaN(id)) {
+      return NextResponse.json({ success: false, error: 'Invalid refund ID' }, { status: 400 });
+    }
+
+    const refund = await prisma.refundRequest.findUnique({ where: { id } });
+    if (!refund) {
+      return NextResponse.json({ success: false, error: 'Refund not found' }, { status: 404 });
+    }
+
+    if (refund.status !== 'PENDING') {
       return NextResponse.json(
-        { success: false, error: 'Invalid refund request ID' },
+        { success: false, error: 'Only pending refunds can be deleted' },
         { status: 400 }
       );
     }
 
-    // Check if refund request exists
-    const existingRefund = await prisma.refundRequest.findUnique({
-      where: { id }
-    });
-
-    if (!existingRefund) {
-      return NextResponse.json(
-        { success: false, error: 'Refund request not found' },
-        { status: 404 }
-      );
-    }
-
-    // Only allow deletion if status is PENDING
-    if (existingRefund.status !== 'PENDING') {
-      return NextResponse.json(
-        { success: false, error: 'Can only delete pending refund requests' },
-        { status: 400 }
-      );
-    }
-
-    // Delete refund request and timeline in transaction
     await prisma.$transaction(async (tx) => {
-      // Delete timeline entries first
-      await tx.refundTimeline.deleteMany({
-        where: { refundRequestId: id }
-      });
-
-      // Delete refund request
-      await tx.refundRequest.delete({
-        where: { id }
-      });
+      await tx.refundTimeline.deleteMany({ where: { refundRequestId: id } });
+      await tx.refundRequest.delete({ where: { id } });
     });
 
-    return NextResponse.json({
-      success: true,
-      message: 'Refund request deleted successfully'
-    });
+    return NextResponse.json({ success: true, message: 'Refund deleted successfully' });
   } catch (error) {
-    console.error('Error deleting refund request:', error);
+    console.error(error);
     return NextResponse.json(
-      { success: false, error: 'Failed to delete refund request' },
+      { success: false, error: 'Failed to delete refund' },
       { status: 500 }
     );
   }
