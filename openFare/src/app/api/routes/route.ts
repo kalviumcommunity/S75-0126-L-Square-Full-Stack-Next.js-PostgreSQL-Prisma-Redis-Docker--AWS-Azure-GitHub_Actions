@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server';
-// import { PrismaClient } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-
-// const prisma = new PrismaClient();
 
 // GET /api/routes - Get all routes with pagination and filters
 export async function GET(req: Request) {
@@ -16,21 +13,13 @@ export async function GET(req: Request) {
     const skip = (page - 1) * limit;
 
     // Build filter
-    const where: any = {};
-    if (origin) {
-      where.origin = { contains: origin, mode: 'insensitive' };
-    }
-    if (destination) {
-      where.destination = { contains: destination, mode: 'insensitive' };
-    }
-    if (operatorId) {
-      where.operatorId = parseInt(operatorId);
-    }
+    const where: Record<string, { contains: string; mode: string } | number> = {};
+    if (origin) where.origin = { contains: origin, mode: 'insensitive' };
+    if (destination) where.destination = { contains: destination, mode: 'insensitive' };
+    if (operatorId) where.operatorId = parseInt(operatorId);
 
-    // Get total count
     const total = await prisma.route.count({ where });
 
-    // Get routes
     const routes = await prisma.route.findMany({
       where,
       skip,
@@ -44,9 +33,7 @@ export async function GET(req: Request) {
             cancellationPolicy: true
           }
         },
-        _count: {
-          select: { schedules: true }
-        }
+        _count: { select: { schedules: true } }
       },
       orderBy: { id: 'desc' }
     });
@@ -63,10 +50,7 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     console.error('Error fetching routes:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch routes' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Failed to fetch routes' }, { status: 500 });
   }
 }
 
@@ -76,7 +60,6 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { origin, destination, distance, operatorId } = body;
 
-    // Validation
     if (!origin || !destination || !distance || !operatorId) {
       return NextResponse.json(
         { success: false, error: 'All fields (origin, destination, distance, operatorId) are required' },
@@ -91,46 +74,19 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check if operator exists
-    const operator = await prisma.busOperator.findUnique({
-      where: { id: operatorId }
-    });
+    const operator = await prisma.busOperator.findUnique({ where: { id: operatorId } });
+    if (!operator) return NextResponse.json({ success: false, error: 'Operator not found' }, { status: 404 });
 
-    if (!operator) {
-      return NextResponse.json(
-        { success: false, error: 'Operator not found' },
-        { status: 404 }
-      );
-    }
-
-    // Create route
     const route = await prisma.route.create({
-      data: {
-        origin,
-        destination,
-        distance,
-        operatorId
-      },
+      data: { origin, destination, distance, operatorId },
       include: {
-        operator: {
-          select: {
-            id: true,
-            name: true,
-            contactPhone: true
-          }
-        }
+        operator: { select: { id: true, name: true, contactPhone: true } }
       }
     });
 
-    return NextResponse.json(
-      { success: true, data: route, message: 'Route created successfully' },
-      { status: 201 }
-    );
+    return NextResponse.json({ success: true, data: route, message: 'Route created successfully' }, { status: 201 });
   } catch (error) {
     console.error('Error creating route:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to create route' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Failed to create route' }, { status: 500 });
   }
 }
