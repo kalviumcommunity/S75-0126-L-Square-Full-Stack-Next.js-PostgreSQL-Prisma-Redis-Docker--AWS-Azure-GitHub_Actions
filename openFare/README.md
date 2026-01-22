@@ -466,3 +466,66 @@ This approach improves developer experience, debugging, and observability withou
 #### Reflection
 
 Consistent routing and standardized responses make the API easier to use, test, and scale, while reducing frontend complexity and integration errors
+
+
+#### Input Validation with Zod
+
+##### What is Zod?
+
+Zod is a library used to validate input data in JavaScript and TypeScript applications.
+
+##### Why use Zod?
+
+- Checks if input data is correct
+
+- Prevents errors
+
+- Makes APIs safer
+
+##### Example
+##### Schema
+import { z } from "zod";
+
+const userSchema = z.object({
+  name: z.string(),
+  email: z.string().email(),
+});
+
+##### Validation
+- userSchema.parse(data);
+
+##### Result
+
+- Valid data → accepted
+
+- Invalid data → error
+
+#### Error Handling Middleware
+#### Overview
+Centralized error handling for consistent, secure API responses across all endpoints.
+#### Key Features
+Structured Logging: JSON-formatted logs with context and timestamps
+Environment Awareness: Detailed errors in development, secure responses in production
+Custom Error Types: ValidationError, AuthenticationError, AuthorizationError, etc.
+Consistent Responses: Unified format across all API routes
+#### Implementation
+plaintext
+src/lib/
+├── logger.ts          # Structured logging
+├── errorHandler.ts    # Centralized error handling
+└── responseHandler.ts # Unified responses
+#### Usage
+typescript
+import { handleError } from "@/lib/errorHandler";
+
+export async function POST(req: Request) {
+  try {
+    // business logic
+    return sendSuccess(data, "Success");
+  } catch (error) {
+    return handleError(error, "POST /api/route");
+  }
+}
+#### Reflection
+This system separates error handling concerns from business logic, reducing duplication and improving maintainability. The environment-aware approach ensures security in production while providing debugging context during development. This creates a scalable foundation for consistent error handling across the entire application.
+
