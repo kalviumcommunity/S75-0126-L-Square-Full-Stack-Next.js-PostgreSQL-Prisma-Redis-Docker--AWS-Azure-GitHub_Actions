@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createOperatorSchema } from "@/lib/schemas/operatorSchema";
+import { handleError, DatabaseError, ValidationError } from "@/lib/errorHandler";
+import { sendSuccess } from "@/lib/responseHandler";
 
 export async function GET(req: Request) {
   try {
@@ -30,9 +32,7 @@ export async function GET(req: Request) {
       include: { _count: { select: { routes: true } } },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: operators,
+    return sendSuccess(operators, "Operators fetched successfully", 200, {
       pagination: {
         page,
         limit,
@@ -41,36 +41,26 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
-    console.error("Error fetching operators:", error);
-    return NextResponse.json(
-      { success: false, error: "Failed to fetch operators" },
-      { status: 500 }
-    );
+    return handleError(error, "GET /api/operators");
   }
 }
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const data = createOperatorSchema.parse(body);
+    
+    // Validate request body
+    let data;
+    try {
+      data = createOperatorSchema.parse(body);
+    } catch (validationError) {
+      throw new ValidationError("Invalid operator data provided");
+    }
 
     const operator = await prisma.busOperator.create({ data });
 
-    return NextResponse.json(
-      { success: true, data: operator },
-      { status: 201 }
-    );
-  } catch (error: unknown) {
-    if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
-      return NextResponse.json(
-        { success: false, error: "License number already exists" },
-        { status: 409 }
-      );
-    }
-
-    return NextResponse.json(
-      { success: false, error: "Validation or creation failed" },
-      { status: 400 }
-    );
+    return sendSuccess(operator, "Operator created successfully", 201);
+  } catch (error) {
+    return handleError(error, "POST /api/operators");
   }
 }
