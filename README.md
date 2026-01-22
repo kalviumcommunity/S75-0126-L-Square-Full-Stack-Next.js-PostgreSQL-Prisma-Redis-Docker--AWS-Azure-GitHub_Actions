@@ -464,3 +464,28 @@ All endpoints were tested using **curl/Postman** to verify:
 #### Reflection
 
 Consistent naming and predictable routes make the API easier to use, debug, and scale. A well-structured API reduces integration errors and improves long-term maintainability.
+
+
+## 🔐 Authorization Middleware (RBAC)
+
+This project uses a reusable **Next.js middleware** to enforce **Role-Based Access Control (RBAC)** using JWTs.
+
+### Key Idea
+- **Authentication** → who the user is  
+- **Authorization** → what the user can access  
+
+### How It Works
+- Middleware intercepts `/api/*` requests
+- Verifies JWT from `Authorization` header
+- Checks user role before allowing access
+
+### Route Access Rules
+| Route | Access |
+|------|-------|
+| `/api/users` | Any authenticated user |
+| `/api/admin` | Admin only |
+
+### Example
+```bash
+curl http://localhost:3000/api/admin \
+-H "Authorization: Bearer <USER_JWT>"
