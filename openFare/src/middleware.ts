@@ -10,9 +10,46 @@ export async function middleware(req: NextRequest) {
 
   console.log("🛡️ MIDDLEWARE HIT:", pathname);
 
-  // Protect API routes except auth
-  if (!pathname.startsWith("/api") || pathname.startsWith("/api/auth")) {
-    console.log("⏭️ SKIPPING (not API or is auth route)");
+  // Handle page routes (non-API routes)
+  if (!pathname.startsWith("/api")) {
+    // Public routes that everyone can access
+    if (pathname === "/" || pathname.startsWith("/login")) {
+      console.log("✅ PUBLIC ROUTE - ALLOWING");
+      return NextResponse.next();
+    }
+
+    // Protected page routes
+    if (
+      pathname.startsWith("/dashboard") || 
+      pathname.startsWith("/users")
+    ) {
+      const token = req.cookies.get("token")?.value;
+      console.log("📋 Cookie Token:", token);
+
+      if (!token) {
+        console.log("❌ NO TOKEN - REDIRECTING TO LOGIN");
+        const loginUrl = new URL("/login", req.url);
+        return NextResponse.redirect(loginUrl);
+      }
+
+      try {
+        const { payload } = await jwtVerify(token, secret);
+        console.log("✅ Token verified for page access, role:", payload.role);
+        return NextResponse.next();
+      } catch (error) {
+        console.log("❌ TOKEN VERIFICATION FAILED:", error);
+        const loginUrl = new URL("/login", req.url);
+        return NextResponse.redirect(loginUrl);
+      }
+    }
+
+    // Let other page routes pass through
+    return NextResponse.next();
+  }
+
+  // Handle API routes (your existing logic)
+  if (pathname.startsWith("/api/auth")) {
+    console.log("⏭️ SKIPPING AUTH API ROUTE");
     return NextResponse.next();
   }
 
@@ -23,7 +60,7 @@ export async function middleware(req: NextRequest) {
   console.log("🎫 Token:", token);
 
   if (!token || token.trim() === "") {
-    console.log("❌ NO TOKEN - REJECTING");
+    console.log("❌ NO TOKEN - REJECTING API REQUEST");
     return NextResponse.json(
       { success: false, message: "Authorization token missing" },
       { status: 401 }
@@ -32,7 +69,7 @@ export async function middleware(req: NextRequest) {
 
   try {
     const { payload } = await jwtVerify(token, secret);
-    console.log("✅ Token verified, role:", payload.role);
+    console.log("✅ API Token verified, role:", payload.role);
 
     const role = payload.role as UserRole;
 
@@ -45,11 +82,11 @@ export async function middleware(req: NextRequest) {
       );
     }
 
-    console.log("✅ AUTHORIZED - Proceeding");
+    console.log("✅ API AUTHORIZED - Proceeding");
     return NextResponse.next();
 
   } catch (error) {
-    console.log("❌ TOKEN VERIFICATION FAILED:", error);
+    console.log("❌ API TOKEN VERIFICATION FAILED:", error);
     return NextResponse.json(
       { success: false, message: "Invalid or expired token" },
       { status: 403 }
@@ -58,5 +95,14 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/:path*"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
 };

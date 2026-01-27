@@ -529,3 +529,19 @@ export async function POST(req: Request) {
 #### Reflection
 This system separates error handling concerns from business logic, reducing duplication and improving maintainability. The environment-aware approach ensures security in production while providing debugging context during development. This creates a scalable foundation for consistent error handling across the entire application.
 
+## Page Routing and Dynamic Routes
+
+The application implements a comprehensive routing system using Next.js App Router with:
+
+### Route Structure
+- **Public Routes**: `/`, `/login`
+- **Protected Routes**: `/dashboard`, `/users/*`
+- **Dynamic Routes**: `/users/[id]`
+- **Error Handling**: Custom 404 page
+
+### Key Features
+- Authentication middleware protecting sensitive routes
+- Dynamic parameter handling for user profiles
+- Custom 404 error page
+- Responsive navigation layout
+- Breadcrumb navigation in dynamic routes
