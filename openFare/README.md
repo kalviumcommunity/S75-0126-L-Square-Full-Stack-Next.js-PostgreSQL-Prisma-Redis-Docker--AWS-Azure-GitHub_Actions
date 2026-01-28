@@ -545,3 +545,36 @@ The application implements a comprehensive routing system using Next.js App Rout
 - Custom 404 error page
 - Responsive navigation layout
 - Breadcrumb navigation in dynamic routes
+
+
+## Layout and Component Architecture
+
+The application uses a modular component architecture in Next.js App Router to ensure consistent UI, scalability, and maintainability.
+
+### Structure
+
+- **Global Layout**: `app/layout.tsx`
+
+- **Shared Components**: `Header, Sidebar, LayoutWrapper`
+
+- **Reusable UI Elements**: `Button, Card, InputField`
+
+### Key Features
+
+- Centralized layout using LayoutWrapper
+
+- Reusable and configurable UI components
+
+- Consistent navigation and spacing across all pages
+
+- Barrel exports for simplified imports
+
+- Scalable folder structure for future growth
+
+### Accessibility & UX
+
+- Semantic HTML `(header, aside, main)`
+
+- Keyboard-friendly navigation
+
+- Consistent color contrast and layout behavior
