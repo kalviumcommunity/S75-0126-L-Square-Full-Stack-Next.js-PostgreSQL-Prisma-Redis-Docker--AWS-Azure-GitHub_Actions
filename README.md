@@ -627,3 +627,62 @@ The application uses a modular component architecture in Next.js App Router to e
 - ✅ Light/Dark theme toggle
 - ✅ Sidebar state management
 - ✅ Persistent UI preferences
+
+
+# Client-side Data Fetching with SWR
+
+## What is SWR?
+
+SWR stands for Stale-While-Revalidate.
+It shows cached data first and then updates it in the background.
+
+This makes the app fast and smooth.
+
+## Why use SWR?
+
+- Fast loading with cached data
+
+- Automatic data refresh
+
+- No repeated API calls
+
+- Easy optimistic UI updates
+
+## Installation
+`npm install swr`
+
+## Fetching Data
+`const { data, error, isLoading } = useSWR("/api/users", fetcher);`
+
+
+- /api/users is the SWR key
+
+- Data is cached and reused
+
+- New data is fetched automatically
+
+## Optimistic Updates
+
+- UI updates instantly
+
+- API request runs in the background
+
+- Data is revalidated after success
+
+## Revalidation
+
+- Refreshes data when tab is focused
+
+- Can auto-refresh using time intervals
+
+- Handles errors with retries
+
+## SWR vs Fetch
+
+- SWR has caching and auto refresh
+
+- Fetch API needs manual handling
+
+## Conclusion
+
+SWR improves performance and user experience by keeping the UI fast while always syncing fresh data.

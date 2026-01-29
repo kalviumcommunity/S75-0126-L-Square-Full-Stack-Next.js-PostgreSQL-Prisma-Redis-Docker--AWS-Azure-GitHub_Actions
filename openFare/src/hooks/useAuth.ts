@@ -1,12 +1,12 @@
 import { useAuthContext } from "@/context/AuthContext";
 
 export function useAuth() {
-  const { user, login, logout } = useAuthContext();
+  const { user, login, logout, isAuthenticated } = useAuthContext();
 
   return {
-    isAuthenticated: !!user,
     user,
     login,
     logout,
+    isAuthenticated,
   };
 }
