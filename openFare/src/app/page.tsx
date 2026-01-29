@@ -1,108 +1,169 @@
+"use client";
+import { useAuth } from "@/hooks/useAuth";
+import { useUI } from "@/hooks/useUI";
+import { 
+  LayoutDashboard, 
+  LogOut, 
+  LogIn, 
+  Sun, 
+  Moon, 
+  PanelLeft, 
+  ShieldCheck, 
+  Globe, 
+  Zap,
+  ArrowRight
+} from "lucide-react"; // Note: Installing lucide-react is highly recommended for cleaner icons
+
 export default function Home() {
+  const { user, login, logout, isAuthenticated } = useAuth();
+  const { theme, toggleTheme, sidebarOpen, toggleSidebar } = useUI();
+
+  const isDark = theme === "dark";
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            Welcome to <span className="text-blue-600">OpenFare</span> 🚌
+    <main className={`min-h-screen transition-colors duration-500 font-sans ${
+      isDark ? "bg-[#0B0F1A] text-slate-200" : "bg-[#F8FAFC] text-slate-900"
+    }`}>
+      
+      {/* Background Decorative Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className={`absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full blur-[120px] opacity-20 ${isDark ? 'bg-blue-500' : 'bg-blue-300'}`} />
+        <div className={`absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] rounded-full blur-[120px] opacity-20 ${isDark ? 'bg-indigo-500' : 'bg-purple-300'}`} />
+      </div>
+
+      <div className="relative max-w-6xl mx-auto px-6 py-20">
+        
+        {/* Header Section */}
+        <header className="text-center mb-20 space-y-6">
+          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-sm font-medium transition-colors ${
+            isDark ? "bg-slate-800/50 border-slate-700 text-blue-400" : "bg-blue-50 border-blue-100 text-blue-600"
+          }`}>
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+            </span>
+            v1.0.0 is live
+          </div>
+          
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight">
+            Travel smarter with <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">OpenFare</span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-10">
-            Modern bus booking platform built with Next.js, PostgreSQL, Prisma, Redis, Docker, and deployed on AWS/Azure
+          
+          <p className={`text-lg md:text-xl max-w-2xl mx-auto ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+            A high-performance bus booking engine powered by a modern distributed architecture.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a 
-              href="/login" 
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition duration-300 transform hover:scale-105"
-            >
-              Get Started
-            </a>
-            <a 
-              href="/dashboard" 
-              className="bg-white hover:bg-gray-50 text-gray-800 font-semibold py-3 px-8 rounded-lg border-2 border-gray-300 transition duration-300"
-            >
-              View Dashboard
-            </a>
+
+          <div className="flex flex-wrap justify-center gap-4 pt-4">
+            <button className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-semibold shadow-lg shadow-blue-500/20 transition-all hover:-translate-y-1 flex items-center gap-2">
+              Get Started <ArrowRight size={18} />
+            </button>
+            <button className={`px-8 py-4 rounded-2xl font-semibold border transition-all hover:bg-slate-500/5 ${
+              isDark ? "border-slate-700 text-slate-200" : "border-slate-200 text-slate-700"
+            }`}>
+              Live Demo
+            </button>
+          </div>
+        </header>
+
+        {/* Control Center (Bento Grid) */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-20">
+          
+          {/* Auth Card */}
+          <div className={`md:col-span-7 rounded-3xl border p-8 transition-all ${
+            isDark ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200 shadow-sm"
+          }`}>
+            <div className="flex items-center justify-between mb-8">
+              <div className="space-y-1">
+                <h2 className="text-xl font-bold">Authentication</h2>
+                <p className={`text-sm ${isDark ? "text-slate-500" : "text-slate-500"}`}>Manage your session state</p>
+              </div>
+              <div className={`p-3 rounded-2xl ${isDark ? "bg-slate-800" : "bg-slate-100"}`}>
+                <ShieldCheck className="text-blue-500" />
+              </div>
+            </div>
+
+            {isAuthenticated ? (
+              <div className="flex items-center justify-between p-4 rounded-2xl border border-dashed border-slate-700 bg-slate-500/5">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold">
+                    {user?.[0]}
+                  </div>
+                  <div>
+                    <p className="font-medium">{user}</p>
+                    <p className="text-xs text-green-500 flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-green-500" /> Active Session
+                    </p>
+                  </div>
+                </div>
+                <button onClick={logout} className="p-2 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors">
+                  <LogOut size={20} />
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => login("KalviumUser")}
+                className="w-full py-4 rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+              >
+                <LogIn size={20} /> Sign in as Guest
+              </button>
+            )}
+          </div>
+
+          {/* Theme/UI Card */}
+          <div className={`md:col-span-5 rounded-3xl border p-8 transition-all ${
+            isDark ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200 shadow-sm"
+          }`}>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-xl font-bold">Appearance</h2>
+              <button 
+                onClick={toggleTheme}
+                className={`p-3 rounded-2xl transition-all ${isDark ? "bg-slate-800 hover:bg-slate-700" : "bg-slate-100 hover:bg-slate-200"}`}
+              >
+                {isDark ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-slate-700" />}
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <button 
+                onClick={toggleSidebar}
+                className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                  sidebarOpen 
+                    ? "border-blue-500 bg-blue-500/5 text-blue-500" 
+                    : isDark ? "border-slate-800 hover:bg-slate-800" : "border-slate-100 hover:bg-slate-50"
+                }`}
+              >
+                <div className="flex items-center gap-3 font-medium">
+                  <PanelLeft size={20} /> Sidebar Layout
+                </div>
+                <div className={`w-10 h-5 rounded-full relative transition-colors ${sidebarOpen ? 'bg-blue-500' : 'bg-slate-400'}`}>
+                  <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${sidebarOpen ? 'left-6' : 'left-1'}`} />
+                </div>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-          <div className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-shadow duration-300">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
+        {/* Feature Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+          {[
+            { title: "Edge Performance", icon: <Zap />, desc: "Redis caching ensures sub-100ms response times globally." },
+            { title: "Hybrid Routing", icon: <Globe />, desc: "Seamlessly switch between public and protected routes." },
+            { title: "Modern Stack", icon: <LayoutDashboard />, desc: "Next.js 16 with Prisma ORM for type-safe data access." },
+          ].map((f, i) => (
+            <div key={i} className="group cursor-default">
+              <div className={`mb-4 p-3 inline-block rounded-xl transition-colors ${isDark ? "bg-slate-800 group-hover:bg-blue-500/20" : "bg-white border group-hover:border-blue-200 shadow-sm"}`}>
+                <div className="text-blue-500">{f.icon}</div>
+              </div>
+              <h3 className="text-lg font-bold mb-2">{f.title}</h3>
+              <p className={`text-sm leading-relaxed ${isDark ? "text-slate-400" : "text-slate-600"}`}>{f.desc}</p>
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">Public Routes</h3>
-            <p className="text-gray-600">Accessible to everyone without authentication</p>
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <span className="inline-block bg-gray-100 text-gray-800 text-sm px-3 py-1 rounded-full">/, /login</span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-shadow duration-300">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-6">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">Protected Routes</h3>
-            <p className="text-gray-600">Require authentication to access sensitive data</p>
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <span className="inline-block bg-gray-100 text-gray-800 text-sm px-3 py-1 rounded-full">/dashboard, /users/*</span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-shadow duration-300">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-6">
-              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">Dynamic Routes</h3>
-            <p className="text-gray-600">Handle dynamic content with parameterized URLs</p>
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <span className="inline-block bg-gray-100 text-gray-800 text-sm px-3 py-1 rounded-full">/users/[id]</span>
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Tech Stack Section */}
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-16">
-          <h2 className="text-2xl font-bold text-center text-gray-900 mb-8">Technology Stack</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="bg-gray-100 rounded-lg p-4 mb-3">
-                <span className="text-2xl">⚛️</span>
-              </div>
-              <h3 className="font-semibold text-gray-900">Next.js 16</h3>
-            </div>
-            <div className="text-center">
-              <div className="bg-gray-100 rounded-lg p-4 mb-3">
-                <span className="text-2xl">🐘</span>
-              </div>
-              <h3 className="font-semibold text-gray-900">PostgreSQL</h3>
-            </div>
-            <div className="text-center">
-              <div className="bg-gray-100 rounded-lg p-4 mb-3">
-                <span className="text-2xl">💾</span>
-              </div>
-              <h3 className="font-semibold text-gray-900">Prisma ORM</h3>
-            </div>
-            <div className="text-center">
-              <div className="bg-gray-100 rounded-lg p-4 mb-3">
-                <span className="text-2xl">⚡</span>
-              </div>
-              <h3 className="font-semibold text-gray-900">Redis Cache</h3>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer Note */}
-        <div className="text-center text-gray-500">
-          <p>Built with ❤️ using modern web technologies</p>
-        </div>
+        {/* Footer */}
+        <footer className={`pt-10 border-t ${isDark ? "border-slate-800 text-slate-500" : "border-slate-200 text-slate-400"} text-center text-sm`}>
+          Built with TypeScript & Tailwind CSS • 2026 OpenFare Inc.
+        </footer>
       </div>
     </main>
   );
