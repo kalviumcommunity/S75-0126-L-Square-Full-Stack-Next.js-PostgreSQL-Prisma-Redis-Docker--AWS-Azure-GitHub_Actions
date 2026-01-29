@@ -529,3 +529,101 @@ curl http://localhost:3000/api/users -H "Authorization: Bearer $TOKEN"
 
 **12x faster responses**  
 **90% fewer DB queries**
+
+# 📧 Transactional Email Integration
+
+This project implements automated email notifications using **SendGrid** for user events like signups, bookings, cancellations, and refunds.
+
+## Setup
+
+1. Install dependency: `npm install @sendgrid/mail`
+2. Add to `.env.local`:
+   ```env
+   SENDGRID_API_KEY="SG.your_key"
+   SENDGRID_SENDER="verified@email.com"
+   ```
+3. Get credentials from [sendgrid.com](https://sendgrid.com) (Free: 100 emails/day)
+
+## Usage
+
+```typescript
+import { sendTemplateEmail } from "@/lib/email-service";
+import { ticketConfirmationTemplate } from "@/lib/email-templates";
+
+await sendTemplateEmail(user.email, "Booking Confirmed", ticketConfirmationTemplate(data));
+```
+
+## Templates Available
+
+- Welcome Email, Booking Confirmation, Cancellation Notice, Refund Processed, Password Reset, Security Alert
+
+## Testing
+
+Login to get JWT token, then: `curl http://localhost:3000/api/test-email -H "Authorization: Bearer TOKEN"`
+
+**Status:** ✅ Tested and verified via SendGrid dashboard. Emails delivered successfully with <1 minute delivery time.
+
+
+
+## Page Routing and Dynamic Routes
+
+The application implements a comprehensive routing system using Next.js App Router with:
+
+### Route Structure
+- **Public Routes**: `/`, `/login`
+- **Protected Routes**: `/dashboard`, `/users/*`
+- **Dynamic Routes**: `/users/[id]`
+- **Error Handling**: Custom 404 page
+
+### Key Features
+- Authentication middleware protecting sensitive routes
+- Dynamic parameter handling for user profiles
+- Custom 404 error page
+- Responsive navigation layout
+- Breadcrumb navigation in dynamic routes
+
+
+## Layout and Component Architecture
+
+The application uses a modular component architecture in Next.js App Router to ensure consistent UI, scalability, and maintainability.
+
+### Structure
+
+- **Global Layout**: `app/layout.tsx`
+
+- **Shared Components**: `Header, Sidebar, LayoutWrapper`
+
+- **Reusable UI Elements**: `Button, Card, InputField`
+
+### Key Features
+
+- Centralized layout using LayoutWrapper
+
+- Reusable and configurable UI components
+
+- Consistent navigation and spacing across all pages
+
+- Barrel exports for simplified imports
+
+- Scalable folder structure for future growth
+
+### Accessibility & UX
+
+- Semantic HTML `(header, aside, main)`
+
+- Keyboard-friendly navigation
+
+- Consistent color contrast and layout behavior
+
+
+## State Management using Context & Hooks
+
+### AuthContext
+- ✅ User login/logout
+- ✅ Authentication state tracking
+- ✅ Global user access
+
+### UIContext
+- ✅ Light/Dark theme toggle
+- ✅ Sidebar state management
+- ✅ Persistent UI preferences
