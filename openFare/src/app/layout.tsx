@@ -4,6 +4,8 @@ import "./globals.css";
 import { LayoutWrapper, Header } from "@/components";
 import { AuthProvider } from "@/context/AuthContext";
 import { UIProvider } from "@/context/UIContext";
+import SWRProvider from "@/components/SWRProvider";
+import SWRStats from "@/components/SWRStats";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,16 +30,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <AuthProvider>
-          <UIProvider>
-            <LayoutWrapper>
-              <Header />
-              <main className="pt-16">
-                {children}
-              </main>
-            </LayoutWrapper>
-          </UIProvider>
-        </AuthProvider>
+        <SWRProvider>
+          <AuthProvider>
+            <UIProvider>
+              <LayoutWrapper>
+                <Header />
+                <main className="pt-16">
+                  {children}
+                </main>
+              </LayoutWrapper>
+            </UIProvider>
+          </AuthProvider>
+        </SWRProvider>
+        <SWRStats />
       </body>
     </html>
   );
