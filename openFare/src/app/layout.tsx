@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { LayoutWrapper, Header } from "@/components";
+import { LayoutWrapper, Header, ToastProvider } from "@/components";
 import { AuthProvider } from "@/context/AuthContext";
 import { UIProvider } from "@/context/UIContext";
 import SWRProvider from "@/components/SWRProvider";
@@ -33,12 +33,14 @@ export default function RootLayout({
         <SWRProvider>
           <AuthProvider>
             <UIProvider>
-              <LayoutWrapper>
-                <Header />
-                <main className="pt-16">
-                  {children}
-                </main>
-              </LayoutWrapper>
+              <ToastProvider>
+                <LayoutWrapper>
+                  <Header />
+                  <main className="pt-16">
+                    {children}
+                  </main>
+                </LayoutWrapper>
+              </ToastProvider>
             </UIProvider>
           </AuthProvider>
         </SWRProvider>

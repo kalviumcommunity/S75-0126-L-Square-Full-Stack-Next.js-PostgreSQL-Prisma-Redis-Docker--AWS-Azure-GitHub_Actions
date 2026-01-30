@@ -8,7 +8,15 @@ export function useUI() {
     toggleSidebar,
     notifications,
     addNotification,
-    removeNotification
+    removeNotification,
+    modal,
+    openModal,
+    closeModal,
+    confirmModal,
+    openConfirmModal,
+    closeConfirmModal,
+    isLoading,
+    showLoading
   } = useUIContext();
 
   return {
@@ -19,5 +27,13 @@ export function useUI() {
     notifications,
     addNotification,
     removeNotification,
+    modal,
+    openModal,
+    closeModal,
+    confirmModal,
+    openConfirmModal,
+    closeConfirmModal,
+    isLoading,
+    showLoading,
   };
 }
