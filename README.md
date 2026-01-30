@@ -686,3 +686,15 @@ This makes the app fast and smooth.
 ## Conclusion
 
 SWR improves performance and user experience by keeping the UI fast while always syncing fresh data.
+
+## Form Handling & Validation
+
+This project demonstrates a modular, reusable React architecture using Next.js and Tailwind CSS.
+
+The UI is broken into small, focused components like PageShell, Card, and feature-specific sections.
+Global state (theme, sidebar) is handled via custom hooks for clarity and scalability.
+Authentication UI is isolated to keep business logic separate from layout concerns.
+
+The refactor improves readability, reusability, and long-term maintainability.
+There are no visual or behavioral changes after refactoring.
+This structure reflects production-grade frontend practices.
