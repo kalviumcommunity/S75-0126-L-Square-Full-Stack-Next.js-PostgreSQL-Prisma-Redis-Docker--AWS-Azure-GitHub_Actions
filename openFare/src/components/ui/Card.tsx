@@ -1,20 +1,19 @@
-import { HTMLAttributes } from 'react';
+import { ReactNode } from "react";
+import { useUI } from "@/hooks/useUI";
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  title?: string;
-}
+export default function Card({ children }: { children: ReactNode }) {
+  const { theme } = useUI();
+  const isDark = theme === "dark";
 
-const Card = ({ children, title, className = '', ...props }: CardProps) => {
   return (
-    <div className={`bg-white rounded-lg shadow p-6 ${className}`} {...props}>
-      {title && (
-        <h3 className="text-lg font-semibold mb-4 text-gray-800">
-          {title}
-        </h3>
-      )}
+    <div
+      className={`rounded-3xl border p-8 transition-all ${
+        isDark
+          ? "bg-slate-900/50 border-slate-800"
+          : "bg-white border-slate-200 shadow-sm"
+      }`}
+    >
       {children}
     </div>
   );
-};
-
-export default Card;
+}
