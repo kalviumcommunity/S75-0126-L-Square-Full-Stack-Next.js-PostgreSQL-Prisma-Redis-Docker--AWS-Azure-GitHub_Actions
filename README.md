@@ -698,3 +698,28 @@ Authentication UI is isolated to keep business logic separate from layout concer
 The refactor improves readability, reusability, and long-term maintainability.
 There are no visual or behavioral changes after refactoring.
 This structure reflects production-grade frontend practices.
+
+
+# Error & Loading States (Next.js)
+
+This task demonstrates handling asynchronous states in a Next.js App Router application using **loading skeletons** and **error boundaries** to improve user experience.
+
+## What’s Implemented
+- **Loading State**: `loading.js` shows a skeleton UI while data is being fetched.
+- **Error State**: `error.js` acts as an error boundary with a friendly message and retry button.
+- **Retry Handling**: Users can retry failed requests using `reset()`.
+
+## Why It Matters
+- Prevents blank screens during slow network requests
+- Gracefully handles errors without crashing the app
+- Builds user trust with clear feedback
+
+## Testing
+- Use browser network throttling to simulate slow loading
+- Simulate API failures to trigger the error UI
+- Verify successful data load after retry
+
+## Deliverables
+- `loading.js` with skeleton UI
+- `error.js` with retry-friendly fallback
+- Screenshots of loading, error, and success states
