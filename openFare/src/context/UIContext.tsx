@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 interface ModalState {
   isOpen: boolean;
@@ -47,6 +47,28 @@ const UIContext = createContext<UIContextType | undefined>(undefined);
 
 export function UIProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [isClient, setIsClient] = useState(false);
+
+  // Initialize theme after mount to avoid hydration mismatch
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    setIsClient(true);
+    // Check localStorage for saved theme preference
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark" || savedTheme === "light") {
+      setTheme(savedTheme);
+      // Apply theme to document
+      if (savedTheme === "dark") {
+        document.documentElement.classList.add("dark");
+      }
+    } else {
+      // Check system preference
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        setTheme("dark");
+        document.documentElement.classList.add("dark");
+      }
+    }
+  }, []);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifications, setNotifications] = useState<{ id: string; message: string; type: "info" | "success" | "warning" | "error" }[]>([]);
   const [modal, setModal] = useState<ModalState>({ 
@@ -63,7 +85,34 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [notificationIdCounter, setNotificationIdCounter] = useState(0);
 
-  const toggleTheme = () => setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  const toggleTheme = () => {
+    setTheme((prev) => {
+      const newTheme = prev === "light" ? "dark" : "light";
+      // Apply theme to document
+      if (typeof window !== "undefined") {
+        if (newTheme === "dark") {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
+        // Save to localStorage
+        localStorage.setItem("theme", newTheme);
+      }
+      return newTheme;
+    });
+  };
+  
+  // Apply theme on initial load
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+      localStorage.setItem("theme", theme);
+    }
+  }, [theme]);
   
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
