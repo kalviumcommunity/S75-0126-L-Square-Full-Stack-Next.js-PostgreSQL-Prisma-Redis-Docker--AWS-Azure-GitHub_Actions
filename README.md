@@ -771,3 +771,34 @@ Token Replay Prevention: Short token lifespan and refresh token rotation
 ## Reflection
 
 This setup balances security and user experience by minimizing unnecessary logins while protecting against common authentication threats.
+
+
+
+# Role-Based Access Control (RBAC)
+
+RBAC is the foundation of secure systems
+
+Prevents privilege abuse
+Supports audit trails
+Scales gracefully
+
+
+Defense in depth
+
+Never trust the client
+Always verify on server
+Log everything
+
+
+Keep it simple
+
+Clear role definitions
+Explicit permissions
+Easy to understand and maintain
+
+
+Think ahead
+
+Design for scalability
+Plan for growth
+Document everything

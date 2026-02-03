@@ -5,17 +5,20 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { useRouter } from "next/navigation";
 import React from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface User {
   id: number;
   name: string;
   email: string;
+  role: string;
   createdAt?: string;
 }
 
 export default function UsersPage() {
   const { data, error, isLoading } = useSWR<User[]>("/api/users", fetcher);
   const router = useRouter();
+  const { user: currentUser } = useAuth();
 
   if (error) {
     // Check if it's an authentication error
@@ -28,11 +31,15 @@ export default function UsersPage() {
 
   if (isLoading) return <p className="p-6">Loading...</p>;
 
+  const canCreate = currentUser?.role === 'ADMIN';
+  const canDelete = currentUser?.role === 'ADMIN';
+  const canEdit = currentUser?.role === 'ADMIN' || currentUser?.role === 'EDITOR';
+
   return (
     <main className="mt-10 p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Users List</h1>
-        <AddUser />
+        {canCreate && <AddUser />}
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white border">
@@ -41,6 +48,7 @@ export default function UsersPage() {
               <th className="py-2 px-4 border">ID</th>
               <th className="py-2 px-4 border">Name</th>
               <th className="py-2 px-4 border">Email</th>
+              <th className="py-2 px-4 border">Role</th>
               <th className="py-2 px-4 border">Actions</th>
             </tr>
           </thead>
@@ -50,6 +58,7 @@ export default function UsersPage() {
                 <td className="py-2 px-4 border">{user.id}</td>
                 <td className="py-2 px-4 border">{user.name}</td>
                 <td className="py-2 px-4 border">{user.email}</td>
+                <td className="py-2 px-4 border">{user.role}</td>
                 <td className="py-2 px-4 border">
                   <Link 
                     href={`/users/${user.id}`} 
@@ -57,6 +66,12 @@ export default function UsersPage() {
                   >
                     View
                   </Link>
+                  {canEdit && (
+                    <button className="text-green-600 hover:underline ml-4">Edit</button>
+                  )}
+                  {canDelete && (
+                    <button className="text-red-600 hover:underline ml-4">Delete</button>
+                  )}
                 </td>
               </tr>
             ))}

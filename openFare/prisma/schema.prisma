@@ -13,7 +13,7 @@ model User {
   createdAt      DateTime        @default(now())
   phone          String?
   password       String          // Required for authentication
-  role           UserRole        @default(PASSENGER)
+  role           UserRole        @default(VIEWER)
   refreshTokenId String?         // For refresh token rotation
   bookings       Booking[]
   refundRequests RefundRequest[]
@@ -116,9 +116,9 @@ model RefundTimeline {
 }
 
 enum UserRole {
-  PASSENGER
-  OPERATOR
   ADMIN
+  EDITOR
+  VIEWER
 }
 
 enum BookingStatus {

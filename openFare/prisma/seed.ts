@@ -70,16 +70,40 @@ async function main() {
   });
 
   /* =======================
-     USER
+     USERS
   ======================= */
-  const user = await prisma.user.upsert({
-    where: { email: 'test@example.com' },
+  const hashedPassword = await bcrypt.hash('password123', 10);
+
+  await prisma.user.upsert({
+    where: { email: 'admin@example.com' },
     update: {},
     create: {
-      name: 'Test User',
-      email: 'test@example.com',
-      phone: '+91-9876543211',
-      role: 'PASSENGER',
+      name: 'Admin User',
+      email: 'admin@example.com',
+      password: hashedPassword,
+      role: 'ADMIN',
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: 'editor@example.com' },
+    update: {},
+    create: {
+      name: 'Editor User',
+      email: 'editor@example.com',
+      password: hashedPassword,
+      role: 'EDITOR',
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: 'viewer@example.com' },
+    update: {},
+    create: {
+      name: 'Viewer User',
+      email: 'viewer@example.com',
+      password: hashedPassword,
+      role: 'VIEWER',
     },
   });
 
@@ -91,7 +115,7 @@ async function main() {
     update: {},
     create: {
       bookingNumber: 'BK-CHN-BLR-0001',
-      userId: user.id,
+      userId: 1, // Assuming admin user is the first user
       scheduleId: schedule.id,
       seatNumber: 'A1',
       totalPrice: schedule.price,
@@ -146,5 +170,4 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
-    await pool.end();
   });
