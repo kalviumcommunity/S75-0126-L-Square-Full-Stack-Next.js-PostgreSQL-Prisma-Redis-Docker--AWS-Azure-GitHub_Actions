@@ -686,3 +686,88 @@ This makes the app fast and smooth.
 ## Conclusion
 
 SWR improves performance and user experience by keeping the UI fast while always syncing fresh data.
+
+
+# Feedback & UX Enhancements
+## Why Feedback Elements Were Added
+
+Feedback elements like toasts and modals were added to clearly inform users about actions such as success, errors, and confirmations. This reduces confusion and improves confidence while using the app.
+
+## Trigger Points
+
+Feedback appears during:
+
+- Form submission (success / validation errors)
+
+- API calls (loading, success, failure)
+
+- Delete actions (confirmation modal + result toast)
+
+## UX Principles Followed
+
+- Non-intrusive: Toasts don’t block user flow
+
+- Informative: Clear messages with action-based feedback
+
+- Accessible: Readable text, proper contrast, and icons for clarity
+
+## Visual Examples
+
+Screenshots/GIFs show:
+
+- Success and error toasts
+
+- Confirmation modals during delete actions
+
+## Impact on User Experience
+
+These improvements made the UI more transparent and predictable, helping users trust the system, understand outcomes instantly, and navigate actions with confidence.
+
+
+# Secure JWT & Session Management
+
+This project implements secure authentication using JWT access tokens and refresh tokens to manage user sessions safely and efficiently.
+
+## JWT Structure
+
+A JWT consists of:
+
+Header – Algorithm and token type
+
+Payload – User data and expiry time
+
+Signature – Verifies token integrity
+
+Sensitive data like passwords are never stored in JWTs.
+
+## Access vs Refresh Tokens
+
+Access Token: Short-lived (e.g., 15 minutes), used for protected API requests.
+
+Refresh Token: Long-lived (e.g., 7 days), used to generate a new access token when it expires.
+
+## Secure Token Storage
+
+Access tokens are sent in the Authorization header.
+
+Refresh tokens are stored in HTTP-only, Secure, SameSite cookies to prevent XSS and CSRF attacks.
+
+## Token Refresh Flow
+
+If an access token expires, the server returns 401.
+
+The client uses the refresh token to request a new access token.
+
+User stays logged in without re-authentication.
+
+## Security Measures
+
+XSS Protection: HTTP-only cookies, input sanitization
+
+CSRF Protection: SameSite cookies
+
+Token Replay Prevention: Short token lifespan and refresh token rotation
+
+## Reflection
+
+This setup balances security and user experience by minimizing unnecessary logins while protecting against common authentication threats.

@@ -1,14 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-
-const JWT_SECRET = process.env.JWT_SECRET;
-
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is not set');
-}
+import { generateAccessToken, generateRefreshToken, setAuthCookies } from '@/lib/tokenManager';
 
 // Validation schema for login
 const loginSchema = z.object({
@@ -26,18 +20,12 @@ export async function POST(req: Request) {
     // Find user by email
     const user = await prisma.user.findUnique({
       where: { email },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        password: true,
-        role: true,
-        createdAt: true,
-      },
     });
 
-    if (!user) {
+    // Type assertion to include password field
+    const typedUser = user as typeof user & { password: string };
+
+    if (!typedUser) {
       return NextResponse.json(
         { success: false, message: 'Invalid credentials' },
         { status: 401 }
@@ -45,7 +33,7 @@ export async function POST(req: Request) {
     }
 
     // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, typedUser.password);
 
     if (!isPasswordValid) {
       return NextResponse.json(
@@ -54,31 +42,36 @@ export async function POST(req: Request) {
       );
     }
 
-    // Generate JWT token
-    const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
-      JWT_SECRET,
-      { expiresIn: '24h' } // Token expires in 24 hours
-    );
+    // Generate access and refresh tokens
+    const accessToken = await generateAccessToken({
+      id: typedUser.id,
+      email: typedUser.email,
+      role: typedUser.role,
+    });
+    
+    const refreshToken = await generateRefreshToken({
+      id: typedUser.id,
+      email: typedUser.email,
+      role: typedUser.role,
+    });
 
-    // Return success with token and user data (excluding password)
-    return NextResponse.json({
+    // Create response with user data
+    const response = NextResponse.json({
       success: true,
       message: 'Login successful',
-      token,
+      accessToken, // Only send access token to the client
       user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        createdAt: user.createdAt,
+        id: typedUser.id,
+        name: typedUser.name,
+        email: typedUser.email,
+        phone: typedUser.phone,
+        role: typedUser.role,
+        createdAt: typedUser.createdAt,
       },
     });
+
+    // Set refresh token in HTTP-only cookie
+    return setAuthCookies(response, refreshToken);
 
   } catch (error) {
     // Zod validation errors

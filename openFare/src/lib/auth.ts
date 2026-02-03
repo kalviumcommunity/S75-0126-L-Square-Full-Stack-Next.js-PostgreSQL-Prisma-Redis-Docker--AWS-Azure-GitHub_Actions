@@ -26,7 +26,7 @@ export function verifyToken(authHeader: string | null): JwtPayload | null {
   if (!token) return null;
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    const decoded = jwt.verify(token, JWT_SECRET!) as JwtPayload;
     return decoded;
   } catch {
     return null;
@@ -65,7 +65,7 @@ export async function authenticateRequest(req: Request): Promise<
   }
 
   try {
-    const user = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    const user = jwt.verify(token, JWT_SECRET!) as JwtPayload;
     return { success: true, user };
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {

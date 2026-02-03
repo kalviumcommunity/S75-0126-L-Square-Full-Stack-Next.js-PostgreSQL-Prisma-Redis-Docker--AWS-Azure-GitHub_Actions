@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 import { UserRole } from "@prisma/client";
+import { verifyAccessToken } from "@/lib/tokenManager";
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
@@ -23,6 +24,9 @@ export async function middleware(req: NextRequest) {
       pathname.startsWith("/dashboard") || 
       pathname.startsWith("/users")
     ) {
+      // For page routes, we still use the cookie token as before
+      // In a real implementation, we'd want to check the access token from auth header
+      // But for now, keeping compatibility with existing page routes
       const token = req.cookies.get("token")?.value;
       console.log("📋 Cookie Token:", token);
 
@@ -68,11 +72,21 @@ export async function middleware(req: NextRequest) {
   }
 
   try {
-    const { payload } = await jwtVerify(token, secret);
-    console.log("✅ API Token verified, role:", payload.role);
-
-    const role = payload.role as UserRole;
-
+    // Verify access token using our new token manager
+    const decodedToken = await verifyAccessToken(token);
+        
+    if (!decodedToken) {
+      console.log("❌ ACCESS TOKEN VERIFICATION FAILED - INVALID TOKEN");
+      return NextResponse.json(
+        { success: false, message: "Invalid or expired token" },
+        { status: 403 }
+      );
+    }
+        
+    console.log("✅ API Token verified, role:", decodedToken.role);
+  
+    const role = decodedToken.role as UserRole;
+  
     // ADMIN-only users route
     if (pathname.startsWith("/api/users") && role !== UserRole.ADMIN) {
       console.log("🚫 NON-ADMIN trying to access /api/users");
@@ -81,10 +95,10 @@ export async function middleware(req: NextRequest) {
         { status: 403 }
       );
     }
-
+  
     console.log("✅ API AUTHORIZED - Proceeding");
     return NextResponse.next();
-
+  
   } catch (error) {
     console.log("❌ API TOKEN VERIFICATION FAILED:", error);
     return NextResponse.json(
