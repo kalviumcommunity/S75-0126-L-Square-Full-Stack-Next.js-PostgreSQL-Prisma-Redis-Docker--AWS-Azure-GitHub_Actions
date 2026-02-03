@@ -687,39 +687,87 @@ This makes the app fast and smooth.
 
 SWR improves performance and user experience by keeping the UI fast while always syncing fresh data.
 
-## Form Handling & Validation
 
-This project demonstrates a modular, reusable React architecture using Next.js and Tailwind CSS.
+# Feedback & UX Enhancements
+## Why Feedback Elements Were Added
 
-The UI is broken into small, focused components like PageShell, Card, and feature-specific sections.
-Global state (theme, sidebar) is handled via custom hooks for clarity and scalability.
-Authentication UI is isolated to keep business logic separate from layout concerns.
+Feedback elements like toasts and modals were added to clearly inform users about actions such as success, errors, and confirmations. This reduces confusion and improves confidence while using the app.
 
-The refactor improves readability, reusability, and long-term maintainability.
-There are no visual or behavioral changes after refactoring.
-This structure reflects production-grade frontend practices.
+## Trigger Points
+
+Feedback appears during:
+
+- Form submission (success / validation errors)
+
+- API calls (loading, success, failure)
+
+- Delete actions (confirmation modal + result toast)
+
+## UX Principles Followed
+
+- Non-intrusive: Toasts don’t block user flow
+
+- Informative: Clear messages with action-based feedback
+
+- Accessible: Readable text, proper contrast, and icons for clarity
+
+## Visual Examples
+
+Screenshots/GIFs show:
+
+- Success and error toasts
+
+- Confirmation modals during delete actions
+
+## Impact on User Experience
+
+These improvements made the UI more transparent and predictable, helping users trust the system, understand outcomes instantly, and navigate actions with confidence.
 
 
-# Error & Loading States (Next.js)
+# Secure JWT & Session Management
 
-This task demonstrates handling asynchronous states in a Next.js App Router application using **loading skeletons** and **error boundaries** to improve user experience.
+This project implements secure authentication using JWT access tokens and refresh tokens to manage user sessions safely and efficiently.
 
-## What’s Implemented
-- **Loading State**: `loading.js` shows a skeleton UI while data is being fetched.
-- **Error State**: `error.js` acts as an error boundary with a friendly message and retry button.
-- **Retry Handling**: Users can retry failed requests using `reset()`.
+## JWT Structure
 
-## Why It Matters
-- Prevents blank screens during slow network requests
-- Gracefully handles errors without crashing the app
-- Builds user trust with clear feedback
+A JWT consists of:
 
-## Testing
-- Use browser network throttling to simulate slow loading
-- Simulate API failures to trigger the error UI
-- Verify successful data load after retry
+Header – Algorithm and token type
 
-## Deliverables
-- `loading.js` with skeleton UI
-- `error.js` with retry-friendly fallback
-- Screenshots of loading, error, and success states
+Payload – User data and expiry time
+
+Signature – Verifies token integrity
+
+Sensitive data like passwords are never stored in JWTs.
+
+## Access vs Refresh Tokens
+
+Access Token: Short-lived (e.g., 15 minutes), used for protected API requests.
+
+Refresh Token: Long-lived (e.g., 7 days), used to generate a new access token when it expires.
+
+## Secure Token Storage
+
+Access tokens are sent in the Authorization header.
+
+Refresh tokens are stored in HTTP-only, Secure, SameSite cookies to prevent XSS and CSRF attacks.
+
+## Token Refresh Flow
+
+If an access token expires, the server returns 401.
+
+The client uses the refresh token to request a new access token.
+
+User stays logged in without re-authentication.
+
+## Security Measures
+
+XSS Protection: HTTP-only cookies, input sanitization
+
+CSRF Protection: SameSite cookies
+
+Token Replay Prevention: Short token lifespan and refresh token rotation
+
+## Reflection
+
+This setup balances security and user experience by minimizing unnecessary logins while protecting against common authentication threats.

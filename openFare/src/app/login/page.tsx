@@ -1,7 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import Cookies from "js-cookie";
 import Link from "next/link";
 
 export default function Login() {
@@ -44,14 +43,28 @@ export default function Login() {
     setErrors({ email: "", password: "", general: "" });
     
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock token (in real apps, get it from backend)
-      Cookies.set("token", "mock.jwt.token");
-      router.push("/dashboard");
-    } catch (_err) {
-      setErrors(prev => ({ ...prev, general: "Invalid credentials. Please try again." }));
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+        credentials: "include", // Include cookies
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Store access token in localStorage
+        localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        router.push("/dashboard");
+      } else {
+        setErrors(prev => ({ ...prev, general: data.message || "Invalid credentials. Please try again." }));
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setErrors(prev => ({ ...prev, general: "Login failed. Please try again." }));
     } finally {
       setLoading(false);
     }

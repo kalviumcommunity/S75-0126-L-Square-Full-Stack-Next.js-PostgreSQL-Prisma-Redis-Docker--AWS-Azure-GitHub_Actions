@@ -14,6 +14,7 @@ model User {
   phone          String?
   password       String          // Required for authentication
   role           UserRole        @default(PASSENGER)
+  refreshTokenId String?         // For refresh token rotation
   bookings       Booking[]
   refundRequests RefundRequest[]
 
