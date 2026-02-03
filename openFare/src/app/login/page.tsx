@@ -2,13 +2,15 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Login() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin@example.com");
+  const [password, setPassword] = useState("password123");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({ email: "", password: "", general: "" });
+  const { login } = useAuth();
 
   const validateForm = () => {
     let isValid = true;
@@ -58,6 +60,7 @@ export default function Login() {
         // Store access token in localStorage
         localStorage.setItem("accessToken", data.accessToken);
         localStorage.setItem("user", JSON.stringify(data.user));
+        login(data.user); // Update auth context
         router.push("/dashboard");
       } else {
         setErrors(prev => ({ ...prev, general: data.message || "Invalid credentials. Please try again." }));

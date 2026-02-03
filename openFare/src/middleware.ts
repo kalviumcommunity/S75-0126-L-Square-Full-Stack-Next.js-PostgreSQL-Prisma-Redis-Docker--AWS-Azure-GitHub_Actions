@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 import { UserRole } from "@prisma/client";
 import { verifyAccessToken } from "@/lib/tokenManager";
+import { rolePermissions, PERMISSIONS } from "@/lib/roles";
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
@@ -86,19 +87,37 @@ export async function middleware(req: NextRequest) {
     console.log("✅ API Token verified, role:", decodedToken.role);
   
     const role = decodedToken.role as UserRole;
-  
-    // ADMIN-only users route
-    if (pathname.startsWith("/api/users") && role !== UserRole.ADMIN) {
-      console.log("🚫 NON-ADMIN trying to access /api/users");
+
+    // RBAC check for API routes
+    let hasPermission = false;
+    if (pathname.startsWith("/api/users")) {
+      if (req.method === 'GET' && rolePermissions[role]?.includes(PERMISSIONS.READ)) {
+        hasPermission = true;
+      } else if (req.method === 'POST' && rolePermissions[role]?.includes(PERMISSIONS.CREATE)) {
+        hasPermission = true;
+      } else if (req.method === 'PUT' && rolePermissions[role]?.includes(PERMISSIONS.UPDATE)) {
+        hasPermission = true;
+      } else if (req.method === 'DELETE' && rolePermissions[role]?.includes(PERMISSIONS.DELETE)) {
+        hasPermission = true;
+      }
+    } else {
+      // For other routes, you can define more specific rules or allow by default
+      hasPermission = true;
+    }
+
+    if (!hasPermission) {
+      console.log(`[RBAC] DENIED: ${role} cannot perform ${req.method} on ${pathname}`);
       return NextResponse.json(
-        { success: false, message: "Admin access required" },
+        { success: false, message: "Access denied: insufficient permissions." },
         { status: 403 }
       );
     }
+
+    console.log(`[RBAC] ALLOWED: ${role} can perform ${req.method} on ${pathname}`);
   
     console.log("✅ API AUTHORIZED - Proceeding");
     return NextResponse.next();
-  
+
   } catch (error) {
     console.log("❌ API TOKEN VERIFICATION FAILED:", error);
     return NextResponse.json(
