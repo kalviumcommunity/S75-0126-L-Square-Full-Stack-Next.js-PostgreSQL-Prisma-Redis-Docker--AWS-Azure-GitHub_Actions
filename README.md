@@ -802,3 +802,50 @@ Think ahead
 Design for scalability
 Plan for growth
 Document everything
+
+# Input Sanitization & OWASP Compliance
+
+## Overview
+
+This project implements comprehensive input sanitization and follows OWASP best practices to protect against XSS, SQL Injection, and other common web vulnerabilities. The security implementation includes multiple layers of protection using industry-standard libraries and techniques.
+
+## Why This Matters
+
+- Prevents malicious script injection (XSS).
+- Protects the database from SQL Injection.
+- Ensures secure data handling and user trust.
+- Maintains compliance with OWASP Top 10.
+
+## Implementation
+
+- use a multi-layered approach.
+
+## Security Features
+
+- XSS Protection: HTML sanitization, script tag removal, attribute validation
+- SQL Injection Prevention: Prisma ORM with parameterized queries
+- Security Headers: CSP, XSS Protection, Frame Options, HSTS
+- Real-time Detection: Attack pattern recognition and threat detection
+
+## Security Layers
+
+- Client-side validation (demo purposes)
+- Server-side sanitization (primary protection)
+- Database-level protection (Prisma ORM)
+- Middleware enforcement (request-level security)
+
+## Before vs After
+
+- Before: <script>alert("Hacked!")</script> gets executed → Security vulnerability
+- After: Script is stripped/detected and neutralized → Safe application
+
+## Security Modules
+
+- **Sanitization**: Multi-library approach (sanitize-html + xss)
+- **Validation**: Context-aware encoding and validation
+- **Detection**: Pattern-based threat detection
+- **Encoding**: HTML entity encoding for safe output
+
+## Reflection
+
+The multi-layered security approach ensures robust protection against various attack vectors. The implementation goes beyond basic sanitization by incorporating detection, validation, and proper encoding. Future improvements could include rate limiting, advanced threat detection, and enhanced logging for security events.
