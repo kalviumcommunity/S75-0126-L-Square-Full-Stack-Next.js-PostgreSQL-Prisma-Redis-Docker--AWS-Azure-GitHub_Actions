@@ -849,3 +849,25 @@ This project implements comprehensive input sanitization and follows OWASP best 
 ## Reflection
 
 The multi-layered security approach ensures robust protection against various attack vectors. The implementation goes beyond basic sanitization by incorporating detection, validation, and proper encoding. Future improvements could include rate limiting, advanced threat detection, and enhanced logging for security events.
+
+
+## Security Headers & HTTPS
+
+### Implemented Headers
+- **HSTS**: Forces HTTPS and prevents MITM attacks
+- **CSP**: Restricts script, style, and image sources to prevent XSS
+- **CORS**: Allows API access only from trusted frontend domains
+
+### Configuration
+- Implemented via `next.config.js` and API route headers
+- HTTPS enforced at deployment level
+
+### Verification
+- Chrome DevTools header inspection
+- securityheaders.com scan
+- Mozilla Observatory scan
+
+### Reflection
+Enforcing HTTPS ensures all data is encrypted in transit.
+CSP required careful tuning to avoid breaking third-party scripts.
+CORS protects backend APIs from unauthorized cross-origin access while allowing trusted frontend communication.
