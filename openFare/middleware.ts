@@ -58,6 +58,12 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Handle security test routes (public access)
+  if (pathname.startsWith("/api/security-test")) {
+    console.log("⏭️ SKIPPING SECURITY TEST ROUTE");
+    return NextResponse.next();
+  }
+
   const authHeader = req.headers.get("authorization");
   console.log("📋 Auth Header:", authHeader);
   
@@ -85,7 +91,7 @@ export async function middleware(req: NextRequest) {
     }
         
     console.log("✅ API Token verified, role:", decodedToken.role);
-  
+
     const role = decodedToken.role as UserRole;
 
     // RBAC check for API routes
@@ -114,7 +120,7 @@ export async function middleware(req: NextRequest) {
     }
 
     console.log(`[RBAC] ALLOWED: ${role} can perform ${req.method} on ${pathname}`);
-  
+
     console.log("✅ API AUTHORIZED - Proceeding");
     return NextResponse.next();
 
